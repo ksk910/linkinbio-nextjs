@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "prisma": "prisma"
+    "start:prod": "NODE_ENV=production npm run start",
+    "prisma": "prisma",
+    "prisma:migrate:prod": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

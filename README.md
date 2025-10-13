@@ -98,4 +98,19 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME
 
 4. デプロイ後、アプリケーションが正常に起動するか確認します。Prisma を Postgres で使う場合は、データベースマイグレーションを実行するか、`prisma migrate deploy` を CI に追加してください。
 
+### Vercel でのマイグレーション実行
+
+Vercel はビルド環境でデータベースへのマイグレーションを実行することを推奨していません。安全にマイグレーションを行う方法の一例:
+
+- GitHub Actions のワークフローで `prisma migrate deploy` を実行（環境変数 `DATABASE_URL` を Actions に設定）。
+- または、Render や Fly.io のようなプラットフォームでマイグレーション用のジョブを実行する。
+
+パッケージに以下のスクリプトを追加しています:
+
+```
+npm run prisma:migrate:prod
+```
+
+これにより、プロダクション環境でのマイグレーションを CI/CD の一部として簡単に実行できます。
+
 

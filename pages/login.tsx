@@ -24,8 +24,8 @@ export default function LoginPage() {
         setMessage(data?.error === 'invalid' ? 'メールまたはパスワードが正しくありません' : 'ログインに失敗しました')
         return
       }
-      // JWTクッキーが付与されるため、そのままプロフィール編集へ遷移
-      router.push('/profile/edit')
+      // JWTクッキーが付与されるため、そのままリンク管理へ遷移
+      router.push('/profile/links')
     } catch (err: any) {
       setMessage(err?.message || 'Unexpected error')
     } finally {

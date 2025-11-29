@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import Head from 'next/head'
 
 export default function SignupPage() {
@@ -6,6 +7,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const router = useRouter()
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,6 +24,8 @@ export default function SignupPage() {
         setMessage(data?.error || 'Sign up failed')
       } else {
         setMessage('Sign up successful')
+        // サインアップでJWTクッキーが設定されるので、そのまま編集画面へ遷移
+        router.push('/profile/edit')
       }
     } catch (err: any) {
       setMessage(err?.message || 'Unexpected error')

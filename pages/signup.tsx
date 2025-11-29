@@ -29,7 +29,7 @@ export default function SignupPage() {
             body: JSON.stringify({ email, password }),
           })
           if (login.ok) {
-            router.push('/profile/edit')
+            router.push('/profile/links')
             return
           }
           setMessage('既に登録済みのメールです。正しいパスワードでログインしてください。')
@@ -38,8 +38,8 @@ export default function SignupPage() {
         }
       } else {
         setMessage('Sign up successful')
-        // サインアップでJWTクッキーが設定されるので、そのまま編集画面へ遷移
-        router.push('/profile/edit')
+        // サインアップでJWTクッキーが設定されるので、そのままリンク管理へ遷移
+        router.push('/profile/links')
       }
     } catch (err: any) {
       setMessage(err?.message || 'Unexpected error')

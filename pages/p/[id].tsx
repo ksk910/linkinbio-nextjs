@@ -1,6 +1,5 @@
 import { GetServerSideProps } from 'next'
 import Head from 'next/head'
-import { prisma } from '../../lib/prisma'
 
 export default function ProfilePage({ profile }: any) {
   if (!profile) return <div className="p-6">Not found</div>
@@ -48,12 +47,17 @@ export default function ProfilePage({ profile }: any) {
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const id = ctx.params?.id as string
-  const profile = await prisma.profile.findUnique({
-    where: { id },
-    include: { links: { orderBy: { order: 'asc' } } },
-  })
-  if (!profile) {
-    return { notFound: true }
+  const protocol = ctx.req.headers['x-forwarded-proto']?.toString() || 'https'
+  const host = ctx.req.headers.host
+  const baseUrl = `${protocol}://${host}`
+  try {
+    const resp = await fetch(`${baseUrl}/api/profile/public?id=${encodeURIComponent(id)}`)
+    if (resp.status === 404) return { notFound: true }
+    if (!resp.ok) throw new Error(`API error: ${resp.status}`)
+    const profile = await resp.json()
+    return { props: { profile } }
+  } catch (e) {
+    console.error('SSR profile load error', e)
+    return { props: { profile: null } }
   }
-  return { props: { profile: JSON.parse(JSON.stringify(profile)) } }
 }

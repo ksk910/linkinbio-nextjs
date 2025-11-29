@@ -1,39 +1,20 @@
-import { useState } from 'react'
-import { useRouter } from 'next/router'
+import { GetServerSideProps } from 'next'
+import { verifyToken } from '../lib/auth'
 
 export default function Home() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const router = useRouter()
+  return null
+}
 
-  async function signup(e: React.FormEvent) {
-    e.preventDefault()
-    const res = await fetch('/api/auth/signup', { method: 'POST', body: JSON.stringify({ email, password }) })
-    if (res.ok) router.push('/profile/edit')
-    else alert('signup failed')
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const cookie = ctx.req.headers.cookie || ''
+  const m = cookie.match(/token=([^;]+)/)
+  const token = m ? m[1] : null
+  const data = token ? (verifyToken(token) as any) : null
+  const loggedIn = Boolean(data?.userId)
+  return {
+    redirect: {
+      destination: loggedIn ? '/profile/links' : '/login',
+      permanent: false,
+    },
   }
-
-  async function login(e: React.FormEvent) {
-    e.preventDefault()
-    const res = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
-    if (res.ok) router.push('/profile/edit')
-    else alert('login failed')
-  }
-
-  return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Link-in-bio Clone (Demo)</h1>
-
-      <form className="space-y-2" onSubmit={(e) => signup(e)}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email" className="input" />
-        <input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" className="input" />
-        <div className="flex gap-2">
-          <button onClick={(e) => signup(e)} className="btn">Sign up</button>
-          <button onClick={(e) => login(e)} className="btn">Log in</button>
-        </div>
-      </form>
-
-      <p className="mt-6 text-sm text-gray-600">After creating an account you'll be redirected to the profile editor.</p>
-    </div>
-  )
 }

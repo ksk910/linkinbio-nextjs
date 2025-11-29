@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { GetServerSideProps } from 'next'
+import { verifyToken } from '../../lib/auth'
 
 type LinkItem = { id: string; title: string; url: string; order: number }
 
@@ -66,4 +68,15 @@ export default function LinksPage() {
       </div>
     </div>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const cookie = ctx.req.headers.cookie || ''
+  const m = cookie.match(/token=([^;]+)/)
+  const token = m ? m[1] : null
+  const data = token ? (verifyToken(token) as any) : null
+  if (!data?.userId) {
+    return { redirect: { destination: '/login', permanent: false } }
+  }
+  return { props: {} }
 }

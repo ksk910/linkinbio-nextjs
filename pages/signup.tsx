@@ -21,7 +21,21 @@ export default function SignupPage() {
       })
       const data = await resp.json()
       if (!resp.ok) {
-        setMessage(data?.error || 'Sign up failed')
+        if (data?.error === 'exists') {
+          // 既存ユーザーなら自動的にログインを試みる
+          const login = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          })
+          if (login.ok) {
+            router.push('/profile/edit')
+            return
+          }
+          setMessage('既に登録済みのメールです。正しいパスワードでログインしてください。')
+        } else {
+          setMessage(data?.error || 'Sign up failed')
+        }
       } else {
         setMessage('Sign up successful')
         // サインアップでJWTクッキーが設定されるので、そのまま編集画面へ遷移

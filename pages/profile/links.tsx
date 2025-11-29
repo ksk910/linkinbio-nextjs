@@ -24,13 +24,18 @@ export default function LinksPage() {
 
   async function addLink(e: any) {
     e.preventDefault()
+    if (!url.startsWith('http')) {
+      alert('URLはhttp://またはhttps://で始まる有効なURLを入力してください')
+      return
+    }
     const res = await fetch('/api/profile/link', { method: 'POST', body: JSON.stringify({ title, url, order: 0 }) })
     if (res.ok) {
       const l = await res.json()
       setLinks((s) => [...s, l])
       setTitle('')
       setUrl('')
-    } else alert('add failed')
+      alert('リンクを追加しました')
+    } else alert('追加に失敗しました')
   }
 
   async function del(id: string) {

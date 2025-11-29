@@ -12,12 +12,12 @@ export default function ProfilePage({ profile }: any) {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={profile.displayName || 'Link in Bio'} />
         <meta property="og:description" content={profile.bio || 'Personal profile and links'} />
-        <meta property="og:image" content={profile.avatarUrl || '/default-avatar.png'} />
+        <meta property="og:image" content={`/api/og?name=${encodeURIComponent(profile.displayName || 'Link in Bio')}&bio=${encodeURIComponent(profile.bio || '')}`} />
         <meta property="og:url" content={`https://linkinbio-ruby.vercel.app/p/${profile.id}`} />
-        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={profile.displayName || 'Link in Bio'} />
         <meta name="twitter:description" content={profile.bio || 'Personal profile and links'} />
-        <meta name="twitter:image" content={profile.avatarUrl || '/default-avatar.png'} />
+        <meta name="twitter:image" content={`/api/og?name=${encodeURIComponent(profile.displayName || 'Link in Bio')}&bio=${encodeURIComponent(profile.bio || '')}`} />
       </Head>
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-md mx-auto p-6 text-center">

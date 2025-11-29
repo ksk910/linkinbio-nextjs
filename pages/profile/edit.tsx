@@ -26,9 +26,13 @@ export default function ProfileEdit() {
 
   async function save(e: any) {
     e.preventDefault()
+    if (avatarUrl && !avatarUrl.startsWith('http')) {
+      alert('Avatar URLはhttp://またはhttps://で始まる有効なURLを入力してください')
+      return
+    }
     const res = await fetch('/api/profile', { method: 'POST', body: JSON.stringify({ displayName, bio, avatarUrl }) })
-    if (res.ok) alert('saved')
-    else alert('save failed')
+    if (res.ok) alert('保存しました')
+    else alert('保存に失敗しました')
   }
 
   if (loading) return <div className="p-6">Loading...</div>

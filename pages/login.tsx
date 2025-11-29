@@ -9,8 +9,14 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
 
+  const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateEmail(email)) {
+      setMessage('有効なメールアドレスを入力してください')
+      return
+    }
     setLoading(true)
     setMessage(null)
     try {

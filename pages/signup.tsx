@@ -9,8 +9,19 @@ export default function SignupPage() {
   const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
 
+  const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+  const validatePassword = (p: string) => p.length >= 6
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateEmail(email)) {
+      setMessage('有効なメールアドレスを入力してください')
+      return
+    }
+    if (!validatePassword(password)) {
+      setMessage('パスワードは6文字以上で入力してください')
+      return
+    }
     setLoading(true)
     setMessage(null)
     try {

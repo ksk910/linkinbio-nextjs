@@ -1,5 +1,6 @@
 import { GetServerSideProps } from 'next'
 import Head from 'next/head'
+import Image from 'next/image'
 
 export default function ProfilePage({ profile }: any) {
   if (!profile) return <div className="p-6">Not found</div>
@@ -21,7 +22,16 @@ export default function ProfilePage({ profile }: any) {
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-md mx-auto p-6 text-center">
           <div className="flex flex-col items-center">
-            <img src={profile.avatarUrl || '/default-avatar.png'} alt="avatar" className="mx-auto rounded-full w-24 h-24 border border-gray-200 shadow-sm" />
+            <div className="mx-auto rounded-full overflow-hidden border border-gray-200 shadow-sm" style={{ width: 96, height: 96 }}>
+              <Image
+                src={profile.avatarUrl || '/default-avatar.png'}
+                alt="avatar"
+                width={96}
+                height={96}
+                className="object-cover"
+                priority
+              />
+            </div>
             <h1 className="text-2xl font-semibold mt-4 tracking-tight">{profile.displayName || 'Anonymous'}</h1>
             {profile.bio && <p className="text-sm text-gray-600 mt-1">{profile.bio}</p>}
           </div>

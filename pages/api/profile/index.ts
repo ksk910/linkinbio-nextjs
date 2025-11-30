@@ -9,7 +9,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     if (!userId) return res.status(401).json({})
-    const profile = await prisma.profile.findUnique({ where: { userId }, include: { links: true } })
+    const profile = await prisma.profile.findUnique({ 
+      where: { userId }, 
+      include: { links: { orderBy: { order: 'asc' } } } 
+    })
     return res.json(profile)
   }
 

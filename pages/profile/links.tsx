@@ -10,6 +10,7 @@ export default function LinksPage() {
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   const [profileId, setProfileId] = useState<string | null>(null)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     async function fetchProfile() {
@@ -52,6 +53,38 @@ export default function LinksPage() {
     if (!res.ok) alert('update failed')
   }
 
+  async function reorderLinks(newLinks: LinkItem[]) {
+    const linkIds = newLinks.map((l) => l.id)
+    const res = await fetch('/api/profile/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ linkIds }),
+    })
+    if (!res.ok) alert('並び順の更新に失敗しました')
+  }
+
+  function handleDragStart(index: number) {
+    setDraggedIndex(index)
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+
+    const newLinks = [...links]
+    const draggedItem = newLinks[draggedIndex]
+    newLinks.splice(draggedIndex, 1)
+    newLinks.splice(index, 0, draggedItem)
+
+    setLinks(newLinks)
+    setDraggedIndex(index)
+  }
+
+  function handleDragEnd() {
+    setDraggedIndex(null)
+    reorderLinks(links)
+  }
+
   if (loading) return <div className="p-6">Loading...</div>
 
   const publicUrl = profileId ? `${window.location.origin}/p/${profileId}` : null
@@ -81,11 +114,25 @@ export default function LinksPage() {
       </form>
 
       <div className="mt-6 space-y-3">
-        {links.map((l) => (
-          <div key={l.id} className="flex items-center gap-2">
-            <input defaultValue={l.title} onBlur={(e) => update(l.id, e.currentTarget.value, l.url)} className="input" />
-            <input defaultValue={l.url} onBlur={(e) => update(l.id, l.title, e.currentTarget.value)} className="input" />
-            <button onClick={() => del(l.id)} className="btn">Delete</button>
+        {links.map((l, index) => (
+          <div
+            key={l.id}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`flex items-center gap-2 p-3 border rounded-lg cursor-move transition-all ${
+              draggedIndex === index ? 'opacity-50 bg-gray-100' : 'bg-white hover:shadow-md'
+            }`}
+          >
+            <div className="text-gray-400 mr-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+              </svg>
+            </div>
+            <input defaultValue={l.title} onBlur={(e) => update(l.id, e.currentTarget.value, l.url)} className="input flex-1" />
+            <input defaultValue={l.url} onBlur={(e) => update(l.id, l.title, e.currentTarget.value)} className="input flex-1" />
+            <button onClick={() => del(l.id)} className="btn bg-red-500 hover:bg-red-600 text-white">Delete</button>
           </div>
         ))}
       </div>

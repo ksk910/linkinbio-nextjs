@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { supabase } from '../../../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 
 export const config = {
@@ -31,8 +31,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const timestamp = Date.now()
     const fileName = `${userId}-${timestamp}.jpg`
 
+    // service_roleキーでSupabaseクライアントを作成（RLS回避）
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
     // Supabase Storageにアップロード
-    const { data: uploadData, error } = await supabase.storage
+    const { data: uploadData, error } = await supabaseAdmin.storage
       .from('avatars')
       .upload(fileName, buffer, {
         contentType: 'image/jpeg',
@@ -45,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 公開URLを取得
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = supabaseAdmin.storage
       .from('avatars')
       .getPublicUrl(fileName)
 

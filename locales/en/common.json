@@ -1,0 +1,79 @@
+{
+  "header": {
+    "title": "Link in Bio",
+    "edit": "Edit",
+    "links": "Links",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Signup"
+  },
+  "login": {
+    "title": "Log In",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Log In",
+    "submitting": "Logging in...",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidCredentials": "Email or password is incorrect",
+    "loginFailed": "Login failed",
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign up"
+  },
+  "signup": {
+    "title": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Sign Up",
+    "submitting": "Signing up...",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPassword": "Password must be at least 6 characters",
+    "emailExists": "This email is already registered. Please log in with the correct password.",
+    "signupSuccess": "Sign up successful",
+    "signupFailed": "Sign up failed",
+    "afterSignup": "After signup, edit your profile:",
+    "manageLinks": "Manage links here:"
+  },
+  "profileEdit": {
+    "title": "Edit Profile",
+    "displayName": "Display name",
+    "bio": "Bio",
+    "avatar": "Avatar image",
+    "avatarUrl": "Avatar URL (or upload above)",
+    "uploading": "Uploading...",
+    "save": "Save",
+    "saved": "Saved successfully",
+    "saveFailed": "Failed to save",
+    "invalidUrl": "Please enter a valid URL starting with http:// or https://",
+    "selectImage": "Please select an image file",
+    "fileSizeLimit": "File size must be 5MB or less",
+    "uploadSuccess": "Image uploaded successfully",
+    "uploadFailed": "Upload failed",
+    "uploadError": "Upload error occurred",
+    "loading": "Loading..."
+  },
+  "links": {
+    "title": "Manage Links",
+    "publicUrl": "Public page URL",
+    "titleLabel": "Title",
+    "urlLabel": "URL",
+    "add": "Add",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this link?",
+    "addSuccess": "Link added successfully",
+    "addFailed": "Failed to add link",
+    "deleteFailed": "Delete failed",
+    "updateFailed": "Update failed",
+    "reorderFailed": "Failed to update order",
+    "invalidUrl": "Please enter a valid URL starting with http:// or https://",
+    "loading": "Loading..."
+  },
+  "common": {
+    "notFound": "Not found",
+    "anonymous": "Anonymous",
+    "loading": "Loading..."
+  }
+}

@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { GetServerSideProps } from 'next'
 import { verifyToken } from '../../lib/auth'
+import { useTranslations } from 'next-intl'
+import { getMessages } from '../../lib/i18n'
 
 type LinkItem = { id: string; title: string; url: string; order: number }
 
 export default function LinksPage() {
+  const t = useTranslations('links')
   const [links, setLinks] = useState<LinkItem[]>([])
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
@@ -28,7 +31,7 @@ export default function LinksPage() {
   async function addLink(e: any) {
     e.preventDefault()
     if (!url.startsWith('http')) {
-      alert('URLはhttp://またはhttps://で始まる有効なURLを入力してください')
+      alert(t('invalidUrl'))
       return
     }
     const res = await fetch('/api/profile/link', { method: 'POST', body: JSON.stringify({ title, url, order: 0 }) })
@@ -37,20 +40,20 @@ export default function LinksPage() {
       setLinks((s) => [...s, l])
       setTitle('')
       setUrl('')
-      alert('リンクを追加しました')
-    } else alert('追加に失敗しました')
+      alert(t('addSuccess'))
+    } else alert(t('addFailed'))
   }
 
   async function del(id: string) {
-    if (!confirm('Delete this link?')) return
+    if (!confirm(t('deleteConfirm'))) return
     const res = await fetch('/api/profile/link', { method: 'DELETE', body: JSON.stringify({ id }) })
     if (res.ok) setLinks((s) => s.filter((x) => x.id !== id))
-    else alert('delete failed')
+    else alert(t('deleteFailed'))
   }
 
   async function update(id: string, title: string, url: string) {
     const res = await fetch('/api/profile/link', { method: 'PUT', body: JSON.stringify({ id, title, url }) })
-    if (!res.ok) alert('update failed')
+    if (!res.ok) alert(t('updateFailed'))
   }
 
   async function reorderLinks(newLinks: LinkItem[]) {
@@ -60,7 +63,7 @@ export default function LinksPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ linkIds }),
     })
-    if (!res.ok) alert('並び順の更新に失敗しました')
+    if (!res.ok) alert(t('reorderFailed'))
   }
 
   function handleDragStart(index: number) {
@@ -85,17 +88,17 @@ export default function LinksPage() {
     reorderLinks(links)
   }
 
-  if (loading) return <div className="p-6">Loading...</div>
+  if (loading) return <div className="p-6">{t('loading')}</div>
 
   const publicUrl = profileId ? `${window.location.origin}/p/${profileId}` : null
 
   return (
     <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Manage Links</h1>
+      <h1 className="text-2xl font-bold mb-4">{t('title')}</h1>
 
       {publicUrl && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-medium text-gray-700 mb-1">公開ページURL</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">{t('publicUrl')}</p>
           <a
             href={publicUrl}
             target="_blank"
@@ -108,9 +111,9 @@ export default function LinksPage() {
       )}
 
       <form onSubmit={addLink} className="space-y-2">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="input" />
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className="input" />
-        <div className="flex gap-2"><button className="btn">Add</button></div>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('titleLabel')} className="input" />
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t('urlLabel')} className="input" />
+        <div className="flex gap-2"><button className="btn">{t('add')}</button></div>
       </form>
 
       <div className="mt-6 space-y-3">
@@ -132,7 +135,7 @@ export default function LinksPage() {
             </div>
             <input defaultValue={l.title} onBlur={(e) => update(l.id, e.currentTarget.value, l.url)} className="input flex-1" />
             <input defaultValue={l.url} onBlur={(e) => update(l.id, l.title, e.currentTarget.value)} className="input flex-1" />
-            <button onClick={() => del(l.id)} className="btn bg-red-500 hover:bg-red-600 text-white">Delete</button>
+            <button onClick={() => del(l.id)} className="btn bg-red-500 hover:bg-red-600 text-white">{t('delete')}</button>
           </div>
         ))}
       </div>
@@ -148,5 +151,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   if (!data?.userId) {
     return { redirect: { destination: '/login', permanent: false } }
   }
-  return { props: {} }
+  return { 
+    props: {
+      messages: await getMessages(ctx.locale || 'ja')
+    }
+  }
 }

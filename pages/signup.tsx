@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { useTranslations } from 'next-intl'
+import { GetStaticPropsContext } from 'next'
+import { getMessages } from '../lib/i18n'
 
 export default function SignupPage() {
+  const t = useTranslations('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,11 +19,11 @@ export default function SignupPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateEmail(email)) {
-      setMessage('有効なメールアドレスを入力してください')
+      setMessage(t('invalidEmail'))
       return
     }
     if (!validatePassword(password)) {
-      setMessage('パスワードは6文字以上で入力してください')
+      setMessage(t('invalidPassword'))
       return
     }
     setLoading(true)
@@ -43,12 +47,12 @@ export default function SignupPage() {
             router.push('/profile/links')
             return
           }
-          setMessage('既に登録済みのメールです。正しいパスワードでログインしてください。')
+          setMessage(t('emailExists'))
         } else {
-          setMessage(data?.error || 'Sign up failed')
+          setMessage(data?.error || t('signupFailed'))
         }
       } else {
-        setMessage('Sign up successful')
+        setMessage(t('signupSuccess'))
         // サインアップでJWTクッキーが設定されるので、そのままリンク管理へ遷移
         router.push('/profile/links')
       }
@@ -62,32 +66,32 @@ export default function SignupPage() {
   return (
     <>
       <Head>
-        <title>Sign Up | Link in Bio</title>
+        <title>{t('title')} | Link in Bio</title>
       </Head>
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-md mx-auto p-6">
-          <h1 className="text-2xl font-semibold mb-4">Sign Up</h1>
+          <h1 className="text-2xl font-semibold mb-4">{t('title')}</h1>
           <form onSubmit={onSubmit} className="space-y-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-medium mb-1">{t('email')}</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2"
-                placeholder="you@example.com"
+                placeholder={t('emailPlaceholder')}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
+              <label className="block text-sm font-medium mb-1">{t('password')}</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2"
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
               />
             </div>
             <button
@@ -95,7 +99,7 @@ export default function SignupPage() {
               disabled={loading}
               className="w-full bg-black text-white rounded-md py-2 hover:bg-gray-800 disabled:opacity-60"
             >
-              {loading ? 'Signing up...' : 'Sign Up'}
+              {loading ? t('submitting') : t('submit')}
             </button>
           </form>
           {message && (
@@ -105,14 +109,22 @@ export default function SignupPage() {
           )}
           <div className="mt-6 text-sm">
             <p>
-              After signup, edit your profile: <a href="/profile/edit" className="text-blue-600 underline">/profile/edit</a>
+              {t('afterSignup')} <a href="/profile/edit" className="text-blue-600 underline">/profile/edit</a>
             </p>
             <p className="mt-1">
-              Manage links here: <a href="/profile/links" className="text-blue-600 underline">/profile/links</a>
+              {t('manageLinks')} <a href="/profile/links" className="text-blue-600 underline">/profile/links</a>
             </p>
           </div>
         </div>
       </main>
     </>
   )
+}
+
+export async function getStaticProps({ locale }: GetStaticPropsContext) {
+  return {
+    props: {
+      messages: await getMessages(locale || 'ja')
+    }
+  }
 }

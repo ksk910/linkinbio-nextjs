@@ -1,0 +1,79 @@
+{
+  "header": {
+    "title": "Link in Bio",
+    "edit": "編集",
+    "links": "リンク",
+    "logout": "ログアウト",
+    "login": "ログイン",
+    "signup": "サインアップ"
+  },
+  "login": {
+    "title": "ログイン",
+    "email": "メール",
+    "password": "パスワード",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "submit": "ログイン",
+    "submitting": "ログイン中...",
+    "invalidEmail": "有効なメールアドレスを入力してください",
+    "invalidCredentials": "メールまたはパスワードが正しくありません",
+    "loginFailed": "ログインに失敗しました",
+    "noAccount": "アカウントがない場合は",
+    "signupLink": "サインアップ"
+  },
+  "signup": {
+    "title": "サインアップ",
+    "email": "メール",
+    "password": "パスワード",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••",
+    "submit": "サインアップ",
+    "submitting": "サインアップ中...",
+    "invalidEmail": "有効なメールアドレスを入力してください",
+    "invalidPassword": "パスワードは6文字以上で入力してください",
+    "emailExists": "既に登録済みのメールです。正しいパスワードでログインしてください。",
+    "signupSuccess": "サインアップに成功しました",
+    "signupFailed": "サインアップに失敗しました",
+    "afterSignup": "サインアップ後、プロフィールを編集:",
+    "manageLinks": "リンクを管理:"
+  },
+  "profileEdit": {
+    "title": "プロフィール編集",
+    "displayName": "表示名",
+    "bio": "自己紹介",
+    "avatar": "アバター画像",
+    "avatarUrl": "アバターURL（または上記からアップロード）",
+    "uploading": "アップロード中...",
+    "save": "保存",
+    "saved": "保存しました",
+    "saveFailed": "保存に失敗しました",
+    "invalidUrl": "Avatar URLはhttp://またはhttps://で始まる有効なURLを入力してください",
+    "selectImage": "画像ファイルを選択してください",
+    "fileSizeLimit": "ファイルサイズは5MB以下にしてください",
+    "uploadSuccess": "画像をアップロードしました",
+    "uploadFailed": "アップロードに失敗しました",
+    "uploadError": "アップロードエラーが発生しました",
+    "loading": "読み込み中..."
+  },
+  "links": {
+    "title": "リンク管理",
+    "publicUrl": "公開ページURL",
+    "titleLabel": "タイトル",
+    "urlLabel": "URL",
+    "add": "追加",
+    "delete": "削除",
+    "deleteConfirm": "このリンクを削除しますか？",
+    "addSuccess": "リンクを追加しました",
+    "addFailed": "追加に失敗しました",
+    "deleteFailed": "削除に失敗しました",
+    "updateFailed": "更新に失敗しました",
+    "reorderFailed": "並び順の更新に失敗しました",
+    "invalidUrl": "URLはhttp://またはhttps://で始まる有効なURLを入力してください",
+    "loading": "読み込み中..."
+  },
+  "common": {
+    "notFound": "見つかりませんでした",
+    "anonymous": "匿名",
+    "loading": "読み込み中..."
+  }
+}

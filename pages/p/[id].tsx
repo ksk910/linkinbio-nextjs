@@ -1,9 +1,13 @@
 import { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
+import { getMessages } from '../../lib/i18n'
 
 export default function ProfilePage({ profile }: any) {
-  if (!profile) return <div className="p-6">Not found</div>
+  const t = useTranslations('common')
+  
+  if (!profile) return <div className="p-6">{t('notFound')}</div>
   return (
     <>
       <Head>
@@ -32,7 +36,7 @@ export default function ProfilePage({ profile }: any) {
                 priority
               />
             </div>
-            <h1 className="text-2xl font-semibold mt-4 tracking-tight">{profile.displayName || 'Anonymous'}</h1>
+            <h1 className="text-2xl font-semibold mt-4 tracking-tight">{profile.displayName || t('anonymous')}</h1>
             {profile.bio && <p className="text-sm text-gray-600 mt-1">{profile.bio}</p>}
           </div>
           <div className="mt-6 space-y-3">
@@ -65,9 +69,14 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     if (resp.status === 404) return { notFound: true }
     if (!resp.ok) throw new Error(`API error: ${resp.status}`)
     const profile = await resp.json()
-    return { props: { profile } }
+    return { 
+      props: { 
+        profile,
+        messages: await getMessages(ctx.locale || 'ja')
+      } 
+    }
   } catch (e) {
     console.error('SSR profile load error', e)
-    return { props: { profile: null } }
+    return { props: { profile: null, messages: await getMessages(ctx.locale || 'ja') } }
   }
 }

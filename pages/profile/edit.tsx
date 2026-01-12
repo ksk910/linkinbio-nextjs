@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next'
 import { verifyToken } from '../../lib/auth'
 import { useTranslations } from 'next-intl'
 import { getMessages } from '../../lib/i18n'
+import FileUpload from '../../components/FileUpload'
 
 export default function ProfileEdit() {
   const t = useTranslations('profileEdit')
@@ -91,14 +92,7 @@ export default function ProfileEdit() {
         
         <div className="space-y-2">
           <label className="block text-sm font-medium">{t('avatar')}</label>
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={handleImageUpload} 
-            disabled={uploading}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-          {uploading && <p className="text-sm text-gray-600">{t('uploading')}</p>}
+          <FileUpload onChange={handleImageUpload} disabled={uploading} />
           <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder={t('avatarUrl')} className="input" />
         </div>
 

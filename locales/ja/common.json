@@ -43,6 +43,7 @@
     "bio": "自己紹介",
     "avatar": "アバター画像",
     "avatarUrl": "アバターURL（または上記からアップロード）",
+    "selectImageFile": "ファイルを選択",
     "uploading": "アップロード中...",
     "save": "保存",
     "saved": "保存しました",

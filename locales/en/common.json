@@ -43,6 +43,7 @@
     "bio": "Bio",
     "avatar": "Avatar image",
     "avatarUrl": "Avatar URL (or upload above)",
+    "selectImageFile": "Choose file",
     "uploading": "Uploading...",
     "save": "Save",
     "saved": "Saved successfully",

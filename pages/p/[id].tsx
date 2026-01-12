@@ -65,8 +65,21 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const host = ctx.req.headers.host
   const baseUrl = `${protocol}://${host}`
   try {
-    const resp = await fetch(`${baseUrl}/api/profile/public?id=${encodeURIComponent(id)}`)
-    if (resp.status === 404) return { notFound: true }
+    // slugパラメータまたはidパラメータでプロフィールを取得
+    const resp = await fetch(`${baseUrl}/api/profile/public?slug=${encodeURIComponent(id)}`)
+    if (resp.status === 404) {
+      // slugが見つからない場合はidで試す
+      const respById = await fetch(`${baseUrl}/api/profile/public?id=${encodeURIComponent(id)}`)
+      if (respById.status === 404) return { notFound: true }
+      if (!respById.ok) throw new Error(`API error: ${respById.status}`)
+      const profile = await respById.json()
+      return { 
+        props: { 
+          profile,
+          messages: await getMessages(ctx.locale || 'ja')
+        } 
+      }
+    }
     if (!resp.ok) throw new Error(`API error: ${resp.status}`)
     const profile = await resp.json()
     return { 

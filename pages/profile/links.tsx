@@ -12,7 +12,7 @@ export default function LinksPage() {
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
-  const [profileId, setProfileId] = useState<string | null>(null)
+  const [slug, setSlug] = useState<string | null>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
@@ -21,12 +21,13 @@ export default function LinksPage() {
       if (res.ok) {
         const data = await res.json()
         setLinks(data?.links || [])
-        setProfileId(data?.id || null)
+        setSlug(data?.slug || null)
       }
       setLoading(false)
     }
     fetchProfile()
   }, [])
+
 
   async function addLink(e: any) {
     e.preventDefault()
@@ -90,7 +91,7 @@ export default function LinksPage() {
 
   if (loading) return <div className="p-6">{t('loading')}</div>
 
-  const publicUrl = profileId ? `${window.location.origin}/p/${profileId}` : null
+  const publicUrl = slug ? `${window.location.origin}/p/${slug}` : null
 
   return (
     <div className="max-w-xl mx-auto p-6">

@@ -8,10 +8,15 @@ import FileUpload from '../../components/FileUpload'
 export default function ProfileEdit() {
   const t = useTranslations('profileEdit')
   const [displayName, setDisplayName] = useState('')
+  const [slug, setSlug] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [userId, setUserId] = useState('')
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'validating' | 'available' | 'taken' | 'invalid'>('idle')
+  const [slugError, setSlugError] = useState('')
+  const slugCheckTimeout = { current: null as NodeJS.Timeout | null }
 
   useEffect(() => {
     async function fetchProfile() {
@@ -20,8 +25,10 @@ export default function ProfileEdit() {
         const data = await res.json()
         if (data) {
           setDisplayName(data.displayName || '')
+          setSlug(data.slug || '')
           setBio(data.bio || '')
           setAvatarUrl(data.avatarUrl || '')
+          setUserId(data.userId || '')
         }
       }
       setLoading(false)
@@ -29,13 +36,74 @@ export default function ProfileEdit() {
     fetchProfile()
   }, [])
 
+  useEffect(() => {
+    if (slugCheckTimeout.current) clearTimeout(slugCheckTimeout.current)
+    
+    if (!slug.trim()) {
+      setSlugStatus('idle')
+      return
+    }
+
+    // クライアント側バリデーション
+    if (!/^[a-zA-Z0-9_-]+$/.test(slug)) {
+      setSlugStatus('invalid')
+      setSlugError(t('slugInvalid'))
+      return
+    }
+
+    if (slug.length < 3) {
+      setSlugStatus('invalid')
+      setSlugError(t('slugTooShort'))
+      return
+    }
+
+    if (slug.length > 30) {
+      setSlugStatus('invalid')
+      setSlugError(t('slugTooLong'))
+      return
+    }
+
+    setSlugStatus('validating')
+    slugCheckTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/profile/check-slug', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug, excludeUserId: userId })
+        })
+        const data = await res.json()
+        if (data.available) {
+          setSlugStatus('available')
+          setSlugError('')
+        } else {
+          setSlugStatus('taken')
+          setSlugError(data.error || t('slugTaken'))
+        }
+      } catch (err) {
+        setSlugStatus('invalid')
+        setSlugError('Error checking slug')
+      }
+    }, 500)
+
+    return () => {
+      if (slugCheckTimeout.current) clearTimeout(slugCheckTimeout.current)
+    }
+  }, [slug, userId, t])
+
   async function save(e: any) {
     e.preventDefault()
+    if (slugStatus !== 'available' && slug !== slug) {
+      alert('Please check your profile URL')
+      return
+    }
     if (avatarUrl && !avatarUrl.startsWith('http')) {
       alert(t('invalidUrl'))
       return
     }
-    const res = await fetch('/api/profile', { method: 'POST', body: JSON.stringify({ displayName, bio, avatarUrl }) })
+    const res = await fetch('/api/profile', { 
+      method: 'POST', 
+      body: JSON.stringify({ displayName, slug, bio, avatarUrl }) 
+    })
     if (res.ok) alert(t('saved'))
     else alert(t('saveFailed'))
   }
@@ -88,6 +156,28 @@ export default function ProfileEdit() {
       <h1 className="text-2xl font-bold mb-4">{t('title')}</h1>
       <form onSubmit={save} className="space-y-3">
         <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('displayName')} className="input" />
+        
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">{t('slug')}</label>
+          <p className="text-xs text-gray-500">{t('slugDescription')}</p>
+          <div className="flex items-center gap-2">
+            <input 
+              value={slug} 
+              onChange={(e) => setSlug(e.target.value)} 
+              placeholder={t('slugPlaceholder')} 
+              className="input flex-1" 
+            />
+            <div className="w-6 h-6 flex items-center justify-center text-lg">
+              {slugStatus === 'validating' && '⏳'}
+              {slugStatus === 'available' && '✅'}
+              {slugStatus === 'taken' && '❌'}
+              {slugStatus === 'invalid' && '⚠️'}
+            </div>
+          </div>
+          {slugError && <p className="text-xs text-red-600">{slugError}</p>}
+          {slugStatus === 'available' && <p className="text-xs text-green-600">{t('slugAvailable')}</p>}
+        </div>
+
         <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder={t('bio')} className="input" />
         
         <div className="space-y-2">
@@ -102,6 +192,7 @@ export default function ProfileEdit() {
       </form>
     </div>
   )
+}
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {

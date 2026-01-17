@@ -50,7 +50,7 @@ export default function SignupPage() {
             if (loginData?.token && typeof window !== 'undefined') {
               localStorage.setItem('token', loginData.token)
             }
-            router.push('/profile/links')
+            router.push('/profile/edit')
             return
           }
           setMessage(t('emailExists'))
@@ -62,8 +62,8 @@ export default function SignupPage() {
         if (data?.token && typeof window !== 'undefined') {
           localStorage.setItem('token', data.token)
         }
-        // サインアップでJWTクッキーが設定されるので、そのままリンク管理へ遷移
-        router.push('/profile/links')
+        // サインアップ後、まずプロフィール編集ページへ
+        router.push('/profile/edit')
       }
     } catch (err: any) {
       setMessage(err?.message || 'Unexpected error')

@@ -4,17 +4,23 @@ import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
+    res.setHeader('Content-Type', 'application/json')
     const token = getTokenFromReq(req)
     const data = token ? (verifyToken(token as string) as any) : null
     const userId = data?.userId
 
     if (req.method === 'GET') {
       if (!userId) return res.status(401).json({ error: 'unauthorized' })
-      const profile = await prisma.profile.findUnique({
-        where: { userId },
-        include: { links: { orderBy: { order: 'asc' } } }
-      })
-      return res.json(profile)
+      try {
+        const profile = await prisma.profile.findUnique({
+          where: { userId },
+          include: { links: { orderBy: { order: 'asc' } } }
+        })
+        return res.json(profile)
+      } catch (dbErr: any) {
+        console.error('API /profile DB error:', dbErr)
+        return res.status(500).json({ error: 'db', code: dbErr?.code || dbErr?.name || 'unknown' })
+      }
     }
 
     if (req.method === 'POST') {

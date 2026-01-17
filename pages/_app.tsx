@@ -17,7 +17,7 @@ function Header() {
     let alive = true
     async function check() {
       try {
-        const res = await fetch('/api/profile')
+        const res = await fetch('/api/profile', { credentials: 'include' })
         if (!alive) return
         if (res.ok) {
           const data = await res.json()

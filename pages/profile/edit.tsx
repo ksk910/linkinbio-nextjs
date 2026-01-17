@@ -26,7 +26,7 @@ export default function ProfileEdit() {
 
   useEffect(() => {
     async function fetchProfile() {
-      const res = await fetch('/api/profile')
+      const res = await fetch('/api/profile', { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         if (data) {
@@ -75,7 +75,8 @@ export default function ProfileEdit() {
         const res = await fetch('/api/profile/check-slug', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug, excludeUserId: userId })
+          body: JSON.stringify({ slug, excludeUserId: userId }),
+          credentials: 'include',
         })
         const data = await res.json()
         if (data.available) {
@@ -108,7 +109,8 @@ export default function ProfileEdit() {
     }
     const res = await fetch('/api/profile', { 
       method: 'POST', 
-      body: JSON.stringify({ displayName, slug, bio, avatarUrl }) 
+      body: JSON.stringify({ displayName, slug, bio, avatarUrl }), 
+      credentials: 'include',
     })
     if (res.ok) alert(t('saved'))
     else alert(t('saveFailed'))
@@ -137,6 +139,7 @@ export default function ProfileEdit() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: base64 }),
+          credentials: 'include',
         })
 
         if (res.ok) {
@@ -180,7 +183,8 @@ export default function ProfileEdit() {
       const res = await fetch('/api/profile/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+        credentials: 'include',
       })
 
       if (res.ok) {

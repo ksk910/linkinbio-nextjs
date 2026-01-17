@@ -63,7 +63,18 @@
     "uploadSuccess": "画像をアップロードしました",
     "uploadFailed": "アップロードに失敗しました",
     "uploadError": "アップロードエラーが発生しました",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "changePassword": "パスワード変更",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmPassword": "パスワード確認",
+    "allFieldsRequired": "全てのフィールドは必須です",
+    "passwordsDoNotMatch": "パスワードが一致しません",
+    "passwordMinLength": "パスワードは6文字以上で入力してください",
+    "passwordChanged": "パスワードを変更しました",
+    "changePasswordFailed": "パスワード変更に失敗しました",
+    "changePasswordError": "パスワード変更エラーが発生しました",
+    "changing": "変更中..."
   },
   "links": {
     "title": "リンク管理",

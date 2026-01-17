@@ -63,7 +63,18 @@
     "uploadSuccess": "Image uploaded successfully",
     "uploadFailed": "Upload failed",
     "uploadError": "Upload error occurred",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "changePassword": "Change Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "allFieldsRequired": "All fields are required",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordChanged": "Password changed successfully",
+    "changePasswordFailed": "Failed to change password",
+    "changePasswordError": "An error occurred while changing password",
+    "changing": "Changing..."
   },
   "links": {
     "title": "Manage Links",

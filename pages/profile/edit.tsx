@@ -16,6 +16,12 @@ export default function ProfileEdit() {
   const [userId, setUserId] = useState('')
   const [slugStatus, setSlugStatus] = useState<'idle' | 'validating' | 'available' | 'taken' | 'invalid'>('idle')
   const [slugError, setSlugError] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [passwordError, setPasswordError] = useState('')
   const slugCheckTimeout = { current: null as NodeJS.Timeout | null }
 
   useEffect(() => {
@@ -149,12 +155,58 @@ export default function ProfileEdit() {
     }
   }
 
+  async function changePassword(e: any) {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordMessage('')
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError(t('allFieldsRequired'))
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('passwordsDoNotMatch'))
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError(t('passwordMinLength'))
+      return
+    }
+
+    setPasswordLoading(true)
+    try {
+      const res = await fetch('/api/profile/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+      })
+
+      if (res.ok) {
+        setPasswordMessage(t('passwordChanged'))
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        const data = await res.json()
+        setPasswordError(data.error || t('changePasswordFailed'))
+      }
+    } catch (err) {
+      setPasswordError(t('changePasswordError'))
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   if (loading) return <div className="p-6">{t('loading')}</div>
 
   return (
     <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">{t('title')}</h1>
-      <form onSubmit={save} className="space-y-3">
+      <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
+      
+      {/* プロフィール編集セクション */}
+      <form onSubmit={save} className="space-y-3 mb-8 pb-8 border-b">
         <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('displayName')} className="input" />
         
         <div className="space-y-2">
@@ -190,6 +242,52 @@ export default function ProfileEdit() {
           <button className="btn">{t('save')}</button>
         </div>
       </form>
+
+      {/* パスワード変更セクション */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">{t('changePassword')}</h2>
+        <form onSubmit={changePassword} className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">{t('currentPassword')}</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder={t('passwordPlaceholder')}
+              className="input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">{t('newPassword')}</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder={t('passwordPlaceholder')}
+              className="input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">{t('confirmPassword')}</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder={t('passwordPlaceholder')}
+              className="input"
+            />
+          </div>
+
+          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
+          {passwordMessage && <p className="text-sm text-green-600">{passwordMessage}</p>}
+
+          <button type="submit" disabled={passwordLoading} className="btn">
+            {passwordLoading ? t('changing') : t('changePassword')}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

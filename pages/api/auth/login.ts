@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const maxAge = 60 * 60 * 24 * 7
   const cookieParts = [`token=${token}`, `HttpOnly`, `Path=/`, `Max-Age=${maxAge}`]
   if (process.env.NODE_ENV === 'production') {
-    cookieParts.push('Secure', 'SameSite=Lax')
+    cookieParts.push('Secure', 'SameSite=None')
   } else {
     cookieParts.push('SameSite=Lax')
   }

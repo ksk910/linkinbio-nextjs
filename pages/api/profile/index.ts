@@ -5,6 +5,7 @@ import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
     const token = getTokenFromReq(req)
     const data = token ? (verifyToken(token as string) as any) : null
     const userId = data?.userId

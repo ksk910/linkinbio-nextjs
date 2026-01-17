@@ -291,7 +291,6 @@ export default function ProfileEdit() {
     </div>
   )
 }
-}
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const cookie = ctx.req.headers.cookie || ''

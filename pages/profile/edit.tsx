@@ -26,7 +26,11 @@ export default function ProfileEdit() {
 
   useEffect(() => {
     async function fetchProfile() {
-      const res = await fetch('/api/profile', { credentials: 'include' })
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const res = await fetch('/api/profile', { 
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
       if (res.ok) {
         const data = await res.json()
         if (data) {
@@ -72,9 +76,13 @@ export default function ProfileEdit() {
     setSlugStatus('validating')
     slugCheckTimeout.current = setTimeout(async () => {
       try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
         const res = await fetch('/api/profile/check-slug', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ slug, excludeUserId: userId }),
           credentials: 'include',
         })
@@ -107,10 +115,12 @@ export default function ProfileEdit() {
       alert(t('invalidUrl'))
       return
     }
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const res = await fetch('/api/profile', { 
       method: 'POST', 
       body: JSON.stringify({ displayName, slug, bio, avatarUrl }), 
       credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
     if (res.ok) alert(t('saved'))
     else alert(t('saveFailed'))
@@ -135,9 +145,13 @@ export default function ProfileEdit() {
       const reader = new FileReader()
       reader.onloadend = async () => {
         const base64 = reader.result as string
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
         const res = await fetch('/api/upload/avatar', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ image: base64 }),
           credentials: 'include',
         })
@@ -180,9 +194,13 @@ export default function ProfileEdit() {
 
     setPasswordLoading(true)
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch('/api/profile/change-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
         credentials: 'include',
       })

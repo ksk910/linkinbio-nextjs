@@ -46,6 +46,10 @@ export default function SignupPage() {
             credentials: 'include',
           })
           if (login.ok) {
+            const loginData = await login.json().catch(() => ({}))
+            if (loginData?.token && typeof window !== 'undefined') {
+              localStorage.setItem('token', loginData.token)
+            }
             router.push('/profile/links')
             return
           }
@@ -55,6 +59,9 @@ export default function SignupPage() {
         }
       } else {
         setMessage(t('signupSuccess'))
+        if (data?.token && typeof window !== 'undefined') {
+          localStorage.setItem('token', data.token)
+        }
         // サインアップでJWTクッキーが設定されるので、そのままリンク管理へ遷移
         router.push('/profile/links')
       }

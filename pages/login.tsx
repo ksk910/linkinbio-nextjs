@@ -35,6 +35,9 @@ export default function LoginPage() {
         setMessage(data?.error === 'invalid' ? t('invalidCredentials') : t('loginFailed'))
         return
       }
+      if (data?.token && typeof window !== 'undefined') {
+        localStorage.setItem('token', data.token)
+      }
       // JWTクッキーが付与されるため、そのままリンク管理へ遷移
       router.push('/profile/links')
     } catch (err: any) {

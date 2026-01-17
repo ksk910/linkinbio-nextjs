@@ -17,7 +17,11 @@ export default function LinksPage() {
 
   useEffect(() => {
     async function fetchProfile() {
-      const res = await fetch('/api/profile', { credentials: 'include' })
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const res = await fetch('/api/profile', { 
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
       if (res.ok) {
         const data = await res.json()
         setLinks(data?.links || [])
@@ -35,7 +39,8 @@ export default function LinksPage() {
       alert(t('invalidUrl'))
       return
     }
-    const res = await fetch('/api/profile/link', { method: 'POST', body: JSON.stringify({ title, url, order: 0 }), credentials: 'include' })
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const res = await fetch('/api/profile/link', { method: 'POST', body: JSON.stringify({ title, url, order: 0 }), credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : undefined })
     if (res.ok) {
       const l = await res.json()
       setLinks((s) => [...s, l])
@@ -47,21 +52,27 @@ export default function LinksPage() {
 
   async function del(id: string) {
     if (!confirm(t('deleteConfirm'))) return
-    const res = await fetch('/api/profile/link', { method: 'DELETE', body: JSON.stringify({ id }), credentials: 'include' })
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const res = await fetch('/api/profile/link', { method: 'DELETE', body: JSON.stringify({ id }), credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : undefined })
     if (res.ok) setLinks((s) => s.filter((x) => x.id !== id))
     else alert(t('deleteFailed'))
   }
 
   async function update(id: string, title: string, url: string) {
-    const res = await fetch('/api/profile/link', { method: 'PUT', body: JSON.stringify({ id, title, url }), credentials: 'include' })
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const res = await fetch('/api/profile/link', { method: 'PUT', body: JSON.stringify({ id, title, url }), credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : undefined })
     if (!res.ok) alert(t('updateFailed'))
   }
 
   async function reorderLinks(newLinks: LinkItem[]) {
     const linkIds = newLinks.map((l) => l.id)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const res = await fetch('/api/profile/reorder', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ linkIds }),
       credentials: 'include',
     })

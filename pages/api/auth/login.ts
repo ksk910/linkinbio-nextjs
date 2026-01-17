@@ -22,5 +22,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     cookieParts.push('SameSite=Lax')
   }
   res.setHeader('Set-Cookie', cookieParts.join('; '))
-  res.json({ ok: true })
+  res.json({ ok: true, token })
 }

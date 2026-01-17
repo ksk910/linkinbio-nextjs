@@ -17,7 +17,11 @@ function Header() {
     let alive = true
     async function check() {
       try {
-        const res = await fetch('/api/profile', { credentials: 'include' })
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        const res = await fetch('/api/profile', {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
         if (!alive) return
         if (res.ok) {
           const data = await res.json()
@@ -34,7 +38,8 @@ function Header() {
   }, [])
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    if (typeof window !== 'undefined') localStorage.removeItem('token')
     setLoggedIn(false)
     router.push('/login')
   }

@@ -25,6 +25,13 @@ export function verifyToken(token: string) {
 }
 
 export function getTokenFromReq(req: NextApiRequest) {
+  // Prefer Authorization header (Bearer) if provided
+  const auth = req.headers.authorization
+  if (auth && auth.startsWith('Bearer ')) {
+    return auth.slice(7)
+  }
+
+  // Fallback to cookie
   const cookie = req.headers.cookie
   if (!cookie) return null
   const match = cookie.match(/token=([^;]+)/)

@@ -18,6 +18,12 @@ function detectSocialMedia(url: string) {
   return null
 }
 
+const safeColor = (value: string | undefined, fallback: string) => {
+  if (typeof value !== 'string') return fallback
+  const trimmed = value.trim()
+  return trimmed ? trimmed : fallback
+}
+
 // SNS アイコンコンポーネント
 function SocialIcon({ type, url }: { type: string; url: string }) {
   const iconClasses = 'w-6 h-6 hover:opacity-80 transition-opacity'
@@ -82,6 +88,10 @@ export default function ProfilePage({ profile }: any) {
   
   if (!profile) return <div className="p-6">{t('notFound')}</div>
 
+  const backgroundColor = safeColor(profile.backgroundColor, '#f9fafb')
+  const textColor = safeColor(profile.textColor, '#111827')
+  const accentColor = safeColor(profile.accentColor, '#111827')
+
   // SNS リンクを抽出
   const socialLinks = profile.links
     .map((link: any) => ({
@@ -106,10 +116,13 @@ export default function ProfilePage({ profile }: any) {
         <meta name="twitter:description" content={profile.bio || 'Personal profile and links'} />
         <meta name="twitter:image" content={`/api/og?name=${encodeURIComponent(profile.displayName || 'Link in Bio')}&bio=${encodeURIComponent(profile.bio || '')}`} />
       </Head>
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen" style={{ backgroundColor, color: textColor }}>
         <div className="max-w-md mx-auto p-6 text-center">
           <div className="flex flex-col items-center">
-            <div className="mx-auto rounded-full overflow-hidden border border-gray-200 shadow-sm" style={{ width: 96, height: 96 }}>
+            <div
+              className="mx-auto rounded-full overflow-hidden border shadow-sm"
+              style={{ width: 96, height: 96, borderColor: accentColor }}
+            >
               <Image
                 src={profile.avatarUrl || '/default-avatar.png'}
                 alt="avatar"
@@ -119,12 +132,14 @@ export default function ProfilePage({ profile }: any) {
                 priority
               />
             </div>
-            <h1 className="text-2xl font-semibold mt-4 tracking-tight">{profile.displayName || t('anonymous')}</h1>
-            {profile.bio && <p className="text-sm text-gray-600 mt-1">{profile.bio}</p>}
+            <h1 className="text-2xl font-semibold mt-4 tracking-tight" style={{ color: textColor }}>
+              {profile.displayName || t('anonymous')}
+            </h1>
+            {profile.bio && <p className="text-sm mt-1" style={{ color: textColor }}>{profile.bio}</p>}
             
             {/* SNS アイコン表示 */}
             {socialLinks.length > 0 && (
-              <div className="flex gap-3 mt-4 justify-center">
+              <div className="flex gap-3 mt-4 justify-center" style={{ color: accentColor }}>
                 {socialLinks.map((link: any) => (
                   <SocialIcon key={link.id} type={link.type} url={link.url} />
                 ))}
@@ -138,10 +153,15 @@ export default function ProfilePage({ profile }: any) {
                 href={l.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block bg-white/90 hover:bg-white border border-gray-200 p-3 rounded-lg shadow-sm hover:shadow transition-shadow"
+                className="block bg-white/90 hover:bg-white p-3 rounded-lg shadow-sm hover:shadow transition-shadow"
+                style={{
+                  border: `1px solid ${accentColor}`,
+                  color: textColor,
+                  backgroundColor: 'rgba(255,255,255,0.92)'
+                }}
               >
                 <div className="font-medium">{l.title}</div>
-                <div className="text-xs text-gray-500 truncate">{l.url}</div>
+                <div className="text-xs truncate" style={{ color: textColor }}>{l.url}</div>
               </a>
             ))}
           </div>

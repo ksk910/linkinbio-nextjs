@@ -5,12 +5,23 @@ import { useTranslations } from 'next-intl'
 import { getMessages } from '../../lib/i18n'
 import FileUpload from '../../components/FileUpload'
 
+const templates = [
+  { key: 'classic', nameKey: 'themeClassic', backgroundColor: '#f9fafb', textColor: '#111827', accentColor: '#111827' },
+  { key: 'night', nameKey: 'themeNight', backgroundColor: '#0f172a', textColor: '#e2e8f0', accentColor: '#38bdf8' },
+  { key: 'sunrise', nameKey: 'themeSunrise', backgroundColor: '#fff7ed', textColor: '#431407', accentColor: '#f97316' },
+  { key: 'mint', nameKey: 'themeMint', backgroundColor: '#ecfdf3', textColor: '#064e3b', accentColor: '#10b981' },
+]
+
 export default function ProfileEdit() {
   const t = useTranslations('profileEdit')
   const [displayName, setDisplayName] = useState('')
   const [slug, setSlug] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [theme, setTheme] = useState('')
+  const [backgroundColor, setBackgroundColor] = useState('')
+  const [textColor, setTextColor] = useState('')
+  const [accentColor, setAccentColor] = useState('')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [userId, setUserId] = useState('')
@@ -38,6 +49,10 @@ export default function ProfileEdit() {
           setSlug(data.slug || '')
           setBio(data.bio || '')
           setAvatarUrl(data.avatarUrl || '')
+          setTheme(data.theme || '')
+          setBackgroundColor(data.backgroundColor || '')
+          setTextColor(data.textColor || '')
+          setAccentColor(data.accentColor || '')
           setUserId(data.userId || '')
         }
       }
@@ -118,7 +133,7 @@ export default function ProfileEdit() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const res = await fetch('/api/profile', { 
       method: 'POST', 
-      body: JSON.stringify({ displayName, slug, bio, avatarUrl }), 
+      body: JSON.stringify({ displayName, slug, bio, avatarUrl, theme, backgroundColor, textColor, accentColor }), 
       credentials: 'include',
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
@@ -258,6 +273,72 @@ export default function ProfileEdit() {
           <label className="block text-sm font-medium">{t('avatar')}</label>
           <FileUpload onChange={handleImageUpload} disabled={uploading} />
           <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder={t('avatarUrl')} className="input" />
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm font-medium">{t('themeTitle')}</label>
+              <p className="text-xs text-gray-500">{t('themeDescription')}</p>
+            </div>
+            <button
+              type="button"
+              className="text-xs text-blue-600 hover:underline"
+              onClick={() => {
+                setTheme('')
+                setBackgroundColor('')
+                setTextColor('')
+                setAccentColor('')
+              }}
+            >
+              {t('themeReset')}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {templates.map((tpl) => {
+              const selected = theme === tpl.key
+              return (
+                <button
+                  type="button"
+                  key={tpl.key}
+                  onClick={() => {
+                    setTheme(tpl.key)
+                    setBackgroundColor(tpl.backgroundColor)
+                    setTextColor(tpl.textColor)
+                    setAccentColor(tpl.accentColor)
+                  }}
+                  className={`border rounded-lg p-3 text-left transition shadow-sm hover:shadow ${selected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                  style={{ backgroundColor: tpl.backgroundColor, color: tpl.textColor }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{t(tpl.nameKey)}</span>
+                    <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: tpl.accentColor, color: tpl.backgroundColor }}>
+                      {t('themeBadge')}
+                    </span>
+                  </div>
+                  <div className="text-xs opacity-80" style={{ color: tpl.textColor }}>
+                    {t('themePreview')}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">{t('backgroundColor')}</label>
+              <input type="color" value={backgroundColor || '#f9fafb'} onChange={(e) => { setBackgroundColor(e.target.value); setTheme('custom') }} className="w-full h-10 cursor-pointer" />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">{t('textColor')}</label>
+              <input type="color" value={textColor || '#111827'} onChange={(e) => { setTextColor(e.target.value); setTheme('custom') }} className="w-full h-10 cursor-pointer" />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">{t('accentColor')}</label>
+              <input type="color" value={accentColor || '#111827'} onChange={(e) => { setAccentColor(e.target.value); setTheme('custom') }} className="w-full h-10 cursor-pointer" />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-2">

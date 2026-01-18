@@ -23,6 +23,10 @@ model Profile {
   displayName String?
   bio       String?
   avatarUrl String?
+  theme     String?
+  backgroundColor String?
+  textColor String?
+  accentColor String?
   links     Link[]
 }
 

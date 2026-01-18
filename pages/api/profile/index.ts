@@ -44,13 +44,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return {}
       }
       const body = normalizeBody(req.body)
-      const { displayName, bio, avatarUrl, slug } = body
+      const { displayName, bio, avatarUrl, slug, theme, backgroundColor, textColor, accentColor } = body
       const existing = await prisma.profile.findUnique({ where: { userId } })
       if (existing) {
-        const updated = await prisma.profile.update({ where: { userId }, data: { displayName, bio, avatarUrl, slug } as any })
+        const updated = await prisma.profile.update({ where: { userId }, data: { displayName, bio, avatarUrl, slug, theme, backgroundColor, textColor, accentColor } as any })
         return res.json(updated)
       }
-      const created = await prisma.profile.create({ data: { userId, displayName, bio, avatarUrl, slug } as any })
+      const created = await prisma.profile.create({ data: { userId, displayName, bio, avatarUrl, slug, theme, backgroundColor, textColor, accentColor } as any })
       return res.json(created)
     }
 

@@ -26,7 +26,7 @@ function SocialIcon({ type, url }: { type: string; url: string }) {
   const icons: Record<string, ReactNode> = {
     twitter: (
       <svg className={iconClasses} fill="currentColor" viewBox="0 0 24 24">
-        <path d="M2 3h4.6L12 10.3 17.1 3H22l-7.6 10.6L22 21h-4.6l-5.3-7.3L6.8 21H2l7.9-10.4z" />
+        <path d="M3 3h5l4 5.5L16.5 3H21l-7 9 7 9h-5l-4-5.5L7.5 21H3l7-9z" />
       </svg>
     ),
     instagram: (

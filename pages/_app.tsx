@@ -50,6 +50,13 @@ function Header() {
     return () => { if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage) }
   }, [])
 
+  // タブがフォーカス復帰時に再チェック（別タブでログインされた可能性に対応）
+  useEffect(() => {
+    const onVisibilityChange = () => { if (!document.hidden) checkAuth() }
+    if (typeof window !== 'undefined') document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => { if (typeof window !== 'undefined') document.removeEventListener('visibilitychange', onVisibilityChange) }
+  }, [])
+
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
     if (typeof window !== 'undefined') localStorage.removeItem('token')

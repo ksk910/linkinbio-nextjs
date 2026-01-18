@@ -13,28 +13,41 @@ function Header() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const router = useRouter()
 
-  useEffect(() => {
-    let alive = true
-    async function check() {
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-        const res = await fetch('/api/profile', {
-          credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        })
-        if (!alive) return
-        if (res.ok) {
-          const data = await res.json()
-          setAvatarUrl(data.avatarUrl || null)
-        }
-        setLoggedIn(res.ok)
-      } catch {
-        if (!alive) return
+  // 認証状態を取得する関数（ルート変更やトークン変更時に再利用）
+  const checkAuth = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const res = await fetch('/api/profile', {
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setAvatarUrl(data?.avatarUrl || null)
+        setLoggedIn(true)
+      } else {
         setLoggedIn(false)
       }
+    } catch {
+      setLoggedIn(false)
     }
-    check()
-    return () => { alive = false }
+  }
+
+  // 初回マウント時に実行
+  useEffect(() => { checkAuth() }, [])
+
+  // ルート遷移完了時に再チェック（ログイン直後の更新用）
+  useEffect(() => {
+    const handler = () => { checkAuth() }
+    router.events.on('routeChangeComplete', handler)
+    return () => { router.events.off('routeChangeComplete', handler) }
+  }, [router.events])
+
+  // storageイベントでも再チェック（別タブやログイン処理でtokenが変わった場合）
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => { if (e.key === 'token') checkAuth() }
+    if (typeof window !== 'undefined') window.addEventListener('storage', onStorage)
+    return () => { if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage) }
   }, [])
 
   async function logout() {

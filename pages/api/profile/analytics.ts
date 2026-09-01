@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '../../../lib/prisma'
 import { checkRateLimit, getClientIp } from '../../../lib/rate-limit'
+import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
@@ -51,9 +52,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const parsedDays = typeof days === 'string' ? Number(days) : 7
     const trendDays = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 7
 
+    const token = getTokenFromReq(req)
+    const decoded = token ? (verifyToken(token) as any) : null
+    const requesterId = decoded?.userId
+    if (!requesterId) return res.status(401).json({ error: 'unauthorized' })
+
     const profile = await prisma.profile.findUnique({ where: { id: profileId } })
     if (!profile) {
       return res.status(404).json({ error: 'profile_not_found' })
+    }
+    if (profile.userId !== requesterId) {
+      return res.status(403).json({ error: 'forbidden' })
     }
 
     const events = await prisma.analyticsEvent.findMany({

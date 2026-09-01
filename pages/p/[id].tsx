@@ -124,13 +124,6 @@ function SocialIcon({ type, url }: { type: string; url: string }) {
 export default function ProfilePage({ profile }: any) {
   const t = useTranslations('common')
   const [qrCodeSvg, setQrCodeSvg] = useState('')
-  const [analyticsSummary, setAnalyticsSummary] = useState<{
-    viewCount: number
-    clickCount: number
-    dailyTrend?: Array<{ date: string; views: number; clicks: number; total: number }>
-    topLinks: Array<{ id: string; title: string; clickCount: number }>
-    insight?: { state: 'positive' | 'neutral' | 'negative'; summary: string; delta: number; currentPeriodTotal: number; previousPeriodTotal: number; actionKey?: string }
-  } | null>(null)
 
   useEffect(() => {
     if (!profile?.id) return
@@ -139,20 +132,6 @@ export default function ProfilePage({ profile }: any) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profileId: profile.id, type: 'view' }),
     }).catch(() => undefined)
-
-    fetch(`/api/profile/analytics?profileId=${encodeURIComponent(profile.id)}&days=7`)
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (!data) return
-        setAnalyticsSummary({
-          viewCount: data.viewCount || 0,
-          clickCount: data.clickCount || 0,
-          dailyTrend: Array.isArray(data.dailyTrend) ? data.dailyTrend : [],
-          topLinks: Array.isArray(data.topLinks) ? data.topLinks : [],
-          insight: data.insight || { state: 'neutral', summary: 'Steady performance', delta: 0, currentPeriodTotal: 0, previousPeriodTotal: 0, actionKey: 'analyticsActionNeutral' },
-        })
-      })
-      .catch(() => undefined)
   }, [profile?.id])
 
   useEffect(() => {
@@ -171,20 +150,6 @@ export default function ProfilePage({ profile }: any) {
   }, [profile?.id])
   
   if (!profile) return <div className="p-6">{t('notFound')}</div>
-
-  const trendData = analyticsSummary?.dailyTrend ?? []
-  const maxTrendValue = Math.max(...trendData.map((entry) => Math.max(entry.views, entry.clicks, 1)), 1)
-  const chartWidth = 220
-  const chartHeight = 84
-  const chartPadding = 8
-  const trendPoints = trendData.map((entry, index) => {
-    const x = chartPadding + (index / Math.max(trendData.length - 1, 1)) * (chartWidth - chartPadding * 2)
-    const viewY = chartHeight - chartPadding - (entry.views / maxTrendValue) * (chartHeight - chartPadding * 2)
-    const clickY = chartHeight - chartPadding - (entry.clicks / maxTrendValue) * (chartHeight - chartPadding * 2)
-    return { ...entry, x, viewY, clickY }
-  })
-  const viewPath = trendPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.viewY.toFixed(1)}`).join(' ')
-  const clickPath = trendPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.clickY.toFixed(1)}`).join(' ')
 
   const backgroundColor = safeColor(profile.backgroundColor, '#f9fafb')
   const textColor = safeColor(profile.textColor, '#111827')
@@ -312,82 +277,6 @@ export default function ProfilePage({ profile }: any) {
             if (block.type === 'links') {
               return (
                 <div key={`block-${index}`}>
-                  {analyticsSummary && (
-                    <div className="mt-6 rounded-xl border border-white/70 bg-white/80 p-4 shadow-sm text-left">
-                      <div className="text-sm font-semibold mb-2">{t('analyticsSummaryTitle')}</div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="rounded bg-slate-50 p-2">
-                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsViews')}</div>
-                          <div className="text-lg font-semibold">{analyticsSummary.viewCount}</div>
-                        </div>
-                        <div className="rounded bg-slate-50 p-2">
-                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsClicks')}</div>
-                          <div className="text-lg font-semibold">{analyticsSummary.clickCount}</div>
-                        </div>
-                      </div>
-                      {trendData.length > 0 && (
-                        <div className="mt-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
-                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsTrend')}</div>
-                          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="mt-2 h-20 w-full">
-                            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-                              const y = chartPadding + (chartHeight - chartPadding * 2) * ratio
-                              return <line key={ratio} x1={chartPadding} x2={chartWidth - chartPadding} y1={y} y2={y} stroke="#e5e7eb" strokeDasharray="3 3" />
-                            })}
-                            <path d={viewPath} fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" />
-                            <path d={clickPath} fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-                            {trendPoints.map((point) => (
-                              <g key={point.date}>
-                                <circle cx={point.x} cy={point.viewY} r="2.5" fill="#0ea5e9" />
-                                <circle cx={point.x} cy={point.clickY} r="2.5" fill="#f59e0b" />
-                              </g>
-                            ))}
-                          </svg>
-                        </div>
-                      )}
-                      {analyticsSummary.insight && (
-                        <div className="mt-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
-                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsSummaryInsight')}</div>
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className={`inline-flex h-2.5 w-2.5 rounded-full ${analyticsSummary.insight.state === 'positive' ? 'bg-emerald-500' : analyticsSummary.insight.state === 'negative' ? 'bg-amber-500' : 'bg-slate-400'}`} />
-                            <span className="font-medium text-slate-700">{t(`analyticsInsight${analyticsSummary.insight.state.charAt(0).toUpperCase()}${analyticsSummary.insight.state.slice(1)}`)}</span>
-                          </div>
-                          <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                            <span>Δ {analyticsSummary.insight.delta >= 0 ? '+' : ''}{analyticsSummary.insight.delta}</span>
-                            <span>{analyticsSummary.insight.currentPeriodTotal} / {analyticsSummary.insight.previousPeriodTotal}</span>
-                          </div>
-                          {analyticsSummary.insight.actionKey && (
-                            <div className="mt-2 rounded bg-slate-50 px-2.5 py-2 text-xs text-slate-600">
-                              {t(analyticsSummary.insight.actionKey)}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {analyticsSummary.topLinks.length > 0 && (
-                        <div className="mt-3">
-                          <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">{t('analyticsTopLinks')}</div>
-                          <div className="space-y-2">
-                            {analyticsSummary.topLinks.slice(0, 3).map((link, index) => {
-                              const isTop = index === 0
-                              return (
-                                <div
-                                  key={link.id}
-                                  className={`flex items-center justify-between rounded px-2.5 py-2 text-xs ${isTop ? 'border border-amber-200 bg-amber-50' : 'bg-white'}`}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${isTop ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                      {index + 1}
-                                    </span>
-                                    <span className="truncate pr-2">{link.title}</span>
-                                  </div>
-                                  <span className={`font-semibold ${isTop ? 'text-amber-700' : 'text-sky-600'}`}>{link.clickCount}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                   {qrCodeSvg ? (
                     <div className="mt-6 rounded-xl border border-white/70 bg-white/80 p-4 shadow-sm">
                       <div className="text-sm font-semibold mb-2">{t('qrCode')}</div>

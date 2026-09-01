@@ -1,9 +1,9 @@
-import React, { type ReactNode } from 'react'
+import React, { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { GetServerSideProps } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { getMessages } from '../../lib/i18n'
+import { buildQrSvg } from '../../lib/qr'
 
 // SNS ライン検出ロジック
 function detectSocialMedia(url: string) {
@@ -22,6 +22,44 @@ const safeColor = (value: string | undefined, fallback: string) => {
   if (typeof value !== 'string') return fallback
   const trimmed = value.trim()
   return trimmed ? trimmed : fallback
+}
+
+function parseLineContent(content: string): { style: 'solid' | 'dashed' | 'dotted' | 'double'; text: string } {
+  try {
+    const parsed = JSON.parse(content)
+    if (parsed && typeof parsed === 'object') {
+      const style = ['solid', 'dashed', 'dotted', 'double'].includes(parsed.style) ? parsed.style : 'solid'
+      return { style: style as 'solid' | 'dashed' | 'dotted' | 'double', text: typeof parsed.text === 'string' ? parsed.text : '' }
+    }
+  } catch {
+    // Fallback to plain text only format.
+  }
+  return { style: 'solid', text: content || '' }
+}
+
+function getEmbeddedVideoUrl(rawUrl: string): string | null {
+  try {
+    const url = new URL(rawUrl)
+    const host = url.hostname.toLowerCase()
+    if (host.includes('youtu.be')) {
+      const id = url.pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+    if (host.includes('youtube.com')) {
+      const v = url.searchParams.get('v')
+      if (v) return `https://www.youtube.com/embed/${v}`
+      const parts = url.pathname.split('/').filter(Boolean)
+      if (parts[0] === 'embed' && parts[1]) return `https://www.youtube.com/embed/${parts[1]}`
+      if (parts[0] === 'shorts' && parts[1]) return `https://www.youtube.com/embed/${parts[1]}`
+    }
+    if (host.includes('vimeo.com')) {
+      const id = url.pathname.split('/').filter(Boolean)[0]
+      return id ? `https://player.vimeo.com/video/${id}` : null
+    }
+  } catch {
+    return null
+  }
+  return null
 }
 
 // SNS アイコンコンポーネント
@@ -85,12 +123,81 @@ function SocialIcon({ type, url }: { type: string; url: string }) {
 
 export default function ProfilePage({ profile }: any) {
   const t = useTranslations('common')
+  const [qrCodeSvg, setQrCodeSvg] = useState('')
+  const [analyticsSummary, setAnalyticsSummary] = useState<{
+    viewCount: number
+    clickCount: number
+    dailyTrend?: Array<{ date: string; views: number; clicks: number; total: number }>
+    topLinks: Array<{ id: string; title: string; clickCount: number }>
+    insight?: { state: 'positive' | 'neutral' | 'negative'; summary: string; delta: number; currentPeriodTotal: number; previousPeriodTotal: number; actionKey?: string }
+  } | null>(null)
+
+  useEffect(() => {
+    if (!profile?.id) return
+    fetch('/api/profile/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profileId: profile.id, type: 'view' }),
+    }).catch(() => undefined)
+
+    fetch(`/api/profile/analytics?profileId=${encodeURIComponent(profile.id)}&days=7`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!data) return
+        setAnalyticsSummary({
+          viewCount: data.viewCount || 0,
+          clickCount: data.clickCount || 0,
+          dailyTrend: Array.isArray(data.dailyTrend) ? data.dailyTrend : [],
+          topLinks: Array.isArray(data.topLinks) ? data.topLinks : [],
+          insight: data.insight || { state: 'neutral', summary: 'Steady performance', delta: 0, currentPeriodTotal: 0, previousPeriodTotal: 0, actionKey: 'analyticsActionNeutral' },
+        })
+      })
+      .catch(() => undefined)
+  }, [profile?.id])
+
+  useEffect(() => {
+    if (!profile?.id) {
+      setQrCodeSvg('')
+      return
+    }
+    if (typeof window === 'undefined') {
+      setQrCodeSvg('')
+      return
+    }
+    const targetUrl = window.location.href
+    buildQrSvg(targetUrl, { width: 180, margin: 1, logoUrl: profile?.avatarUrl || undefined })
+      .then((svg) => setQrCodeSvg(svg))
+      .catch(() => setQrCodeSvg(''))
+  }, [profile?.id])
   
   if (!profile) return <div className="p-6">{t('notFound')}</div>
+
+  const trendData = analyticsSummary?.dailyTrend ?? []
+  const maxTrendValue = Math.max(...trendData.map((entry) => Math.max(entry.views, entry.clicks, 1)), 1)
+  const chartWidth = 220
+  const chartHeight = 84
+  const chartPadding = 8
+  const trendPoints = trendData.map((entry, index) => {
+    const x = chartPadding + (index / Math.max(trendData.length - 1, 1)) * (chartWidth - chartPadding * 2)
+    const viewY = chartHeight - chartPadding - (entry.views / maxTrendValue) * (chartHeight - chartPadding * 2)
+    const clickY = chartHeight - chartPadding - (entry.clicks / maxTrendValue) * (chartHeight - chartPadding * 2)
+    return { ...entry, x, viewY, clickY }
+  })
+  const viewPath = trendPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.viewY.toFixed(1)}`).join(' ')
+  const clickPath = trendPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.clickY.toFixed(1)}`).join(' ')
 
   const backgroundColor = safeColor(profile.backgroundColor, '#f9fafb')
   const textColor = safeColor(profile.textColor, '#111827')
   const accentColor = safeColor(profile.accentColor, '#111827')
+
+  const blocks = Array.isArray(profile.blocks) && profile.blocks.length > 0
+    ? [...profile.blocks].sort((a: any, b: any) => a.order - b.order)
+    : [
+        { type: 'profile', content: '' },
+        { type: 'headline', content: '' },
+        { type: 'bio', content: '' },
+        { type: 'links', content: '' },
+      ]
 
   // SNS リンクを抽出
   const socialLinks = profile.links
@@ -100,6 +207,48 @@ export default function ProfilePage({ profile }: any) {
     }))
     .filter((link: any) => link.type)
     .slice(0, 8) // 最大8つまで
+
+  const renderLinks = () => (
+    <div className="mt-6 space-y-3">
+      {profile.links.map((l: any) => (
+        <a
+          key={l.id}
+          href={l.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            if (!profile?.id) return
+            fetch('/api/profile/analytics', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ profileId: profile.id, type: 'click', linkId: l.id }),
+            }).catch(() => undefined)
+          }}
+          className="block bg-white/90 hover:bg-white p-3 rounded-lg shadow-sm hover:shadow transition-shadow"
+          style={{
+            border: `1px solid ${accentColor}`,
+            color: textColor,
+            backgroundColor: 'rgba(255,255,255,0.92)'
+          }}
+        >
+          <div className="flex items-center gap-2">
+            {l.imageUrl && (
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded overflow-hidden bg-white border border-gray-200">
+                <img src={l.imageUrl} alt={l.title} width={32} height={32} className="object-cover" />
+              </span>
+            )}
+            {!l.imageUrl && l.icon && (
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded bg-white border border-gray-200 text-lg">
+                {l.icon}
+              </span>
+            )}
+            <div className="font-medium">{l.title}</div>
+          </div>
+          <div className="text-xs truncate" style={{ color: textColor }}>{l.url}</div>
+        </a>
+      ))}
+    </div>
+  )
 
   return (
     <>
@@ -118,53 +267,197 @@ export default function ProfilePage({ profile }: any) {
       </Head>
       <main className="min-h-screen" style={{ backgroundColor, color: textColor }}>
         <div className="max-w-md mx-auto p-6 text-center">
-          <div className="flex flex-col items-center">
-            <div
-              className="mx-auto rounded-full overflow-hidden border shadow-sm"
-              style={{ width: 96, height: 96, borderColor: accentColor }}
-            >
-              <Image
-                src={profile.avatarUrl || '/default-avatar.png'}
-                alt="avatar"
-                width={96}
-                height={96}
-                className="object-cover"
-                priority
-              />
-            </div>
-            <h1 className="text-2xl font-semibold mt-4 tracking-tight" style={{ color: textColor }}>
-              {profile.displayName || t('anonymous')}
-            </h1>
-            {profile.bio && <p className="text-sm mt-1" style={{ color: textColor }}>{profile.bio}</p>}
-            
-            {/* SNS アイコン表示 */}
-            {socialLinks.length > 0 && (
-              <div className="flex gap-3 mt-4 justify-center" style={{ color: accentColor }}>
-                {socialLinks.map((link: any) => (
-                  <SocialIcon key={link.id} type={link.type} url={link.url} />
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="mt-6 space-y-3">
-            {profile.links.map((l: any) => (
-              <a
-                key={l.id}
-                href={l.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block bg-white/90 hover:bg-white p-3 rounded-lg shadow-sm hover:shadow transition-shadow"
-                style={{
-                  border: `1px solid ${accentColor}`,
-                  color: textColor,
-                  backgroundColor: 'rgba(255,255,255,0.92)'
-                }}
-              >
-                <div className="font-medium">{l.title}</div>
-                <div className="text-xs truncate" style={{ color: textColor }}>{l.url}</div>
-              </a>
-            ))}
-          </div>
+          {blocks.map((block: any, index: number) => {
+            if (block.type === 'profile') {
+              return (
+                <div key={`block-${index}`} className="flex flex-col items-center">
+                  <div
+                    className="mx-auto rounded-full overflow-hidden border shadow-sm"
+                    style={{ width: 96, height: 96, borderColor: accentColor }}
+                  >
+                    <img
+                      src={profile.avatarUrl || '/default-avatar.png'}
+                      alt="avatar"
+                      width={96}
+                      height={96}
+                      className="object-cover"
+                    />
+                  </div>
+                  <h1 className="text-2xl font-semibold mt-4 tracking-tight" style={{ color: textColor }}>
+                    {profile.displayName || t('anonymous')}
+                  </h1>
+                  {socialLinks.length > 0 && (
+                    <div className="flex gap-3 mt-4 justify-center" style={{ color: accentColor }}>
+                      {socialLinks.map((link: any) => (
+                        <SocialIcon key={link.id} type={link.type} url={link.url} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            if (block.type === 'headline') {
+              const value = String(block.content || profile.displayName || '').trim()
+              if (!value) return null
+              return <h2 key={`block-${index}`} className="text-xl font-semibold mt-6">{value}</h2>
+            }
+
+            if (block.type === 'bio') {
+              const value = String(block.content || profile.bio || '').trim()
+              if (!value) return null
+              return <p key={`block-${index}`} className="text-sm mt-3">{value}</p>
+            }
+
+            if (block.type === 'links') {
+              return (
+                <div key={`block-${index}`}>
+                  {analyticsSummary && (
+                    <div className="mt-6 rounded-xl border border-white/70 bg-white/80 p-4 shadow-sm text-left">
+                      <div className="text-sm font-semibold mb-2">{t('analyticsSummaryTitle')}</div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="rounded bg-slate-50 p-2">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsViews')}</div>
+                          <div className="text-lg font-semibold">{analyticsSummary.viewCount}</div>
+                        </div>
+                        <div className="rounded bg-slate-50 p-2">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsClicks')}</div>
+                          <div className="text-lg font-semibold">{analyticsSummary.clickCount}</div>
+                        </div>
+                      </div>
+                      {trendData.length > 0 && (
+                        <div className="mt-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsTrend')}</div>
+                          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="mt-2 h-20 w-full">
+                            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                              const y = chartPadding + (chartHeight - chartPadding * 2) * ratio
+                              return <line key={ratio} x1={chartPadding} x2={chartWidth - chartPadding} y1={y} y2={y} stroke="#e5e7eb" strokeDasharray="3 3" />
+                            })}
+                            <path d={viewPath} fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" />
+                            <path d={clickPath} fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+                            {trendPoints.map((point) => (
+                              <g key={point.date}>
+                                <circle cx={point.x} cy={point.viewY} r="2.5" fill="#0ea5e9" />
+                                <circle cx={point.x} cy={point.clickY} r="2.5" fill="#f59e0b" />
+                              </g>
+                            ))}
+                          </svg>
+                        </div>
+                      )}
+                      {analyticsSummary.insight && (
+                        <div className="mt-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">{t('analyticsSummaryInsight')}</div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className={`inline-flex h-2.5 w-2.5 rounded-full ${analyticsSummary.insight.state === 'positive' ? 'bg-emerald-500' : analyticsSummary.insight.state === 'negative' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                            <span className="font-medium text-slate-700">{t(`analyticsInsight${analyticsSummary.insight.state.charAt(0).toUpperCase()}${analyticsSummary.insight.state.slice(1)}`)}</span>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                            <span>Δ {analyticsSummary.insight.delta >= 0 ? '+' : ''}{analyticsSummary.insight.delta}</span>
+                            <span>{analyticsSummary.insight.currentPeriodTotal} / {analyticsSummary.insight.previousPeriodTotal}</span>
+                          </div>
+                          {analyticsSummary.insight.actionKey && (
+                            <div className="mt-2 rounded bg-slate-50 px-2.5 py-2 text-xs text-slate-600">
+                              {t(analyticsSummary.insight.actionKey)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {analyticsSummary.topLinks.length > 0 && (
+                        <div className="mt-3">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">{t('analyticsTopLinks')}</div>
+                          <div className="space-y-2">
+                            {analyticsSummary.topLinks.slice(0, 3).map((link, index) => {
+                              const isTop = index === 0
+                              return (
+                                <div
+                                  key={link.id}
+                                  className={`flex items-center justify-between rounded px-2.5 py-2 text-xs ${isTop ? 'border border-amber-200 bg-amber-50' : 'bg-white'}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${isTop ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                      {index + 1}
+                                    </span>
+                                    <span className="truncate pr-2">{link.title}</span>
+                                  </div>
+                                  <span className={`font-semibold ${isTop ? 'text-amber-700' : 'text-sky-600'}`}>{link.clickCount}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {qrCodeSvg ? (
+                    <div className="mt-6 rounded-xl border border-white/70 bg-white/80 p-4 shadow-sm">
+                      <div className="text-sm font-semibold mb-2">{t('qrCode')}</div>
+                      <p className="text-xs opacity-70 mb-3">{t('qrCodeHint')}</p>
+                      <div className="flex justify-center rounded-lg bg-white p-3" dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
+                      <p className="text-[11px] mt-2 opacity-70 break-all">{`https://linkinbio-ruby.vercel.app/p/${profile.id}`}</p>
+                    </div>
+                  ) : null}
+                  {renderLinks()}
+                </div>
+              )
+            }
+
+            if (block.type === 'icon') {
+              const value = String(block.content || '').trim()
+              if (!value) return null
+              const icons = value.split(/[\s,]+/).filter(Boolean).slice(0, 8)
+              return (
+                <div key={`block-${index}`} className="mt-4 flex items-center justify-center gap-2 text-3xl">
+                  {icons.map((icon, iconIndex) => (
+                    <span key={`icon-${index}-${iconIndex}`}>{icon}</span>
+                  ))}
+                </div>
+              )
+            }
+
+            if (block.type === 'line') {
+              const value = parseLineContent(String(block.content || '').trim())
+              const borderStyle = value.style
+              return (
+                <div key={`block-${index}`} className="mt-5">
+                  <div className="border-t" style={{ borderColor: accentColor, borderTopStyle: borderStyle }} />
+                  {value.text && <p className="text-xs mt-2">{value.text}</p>}
+                </div>
+              )
+            }
+
+            if (block.type === 'video') {
+              const value = String(block.content || '').trim()
+              if (!value) return null
+              const embedUrl = getEmbeddedVideoUrl(value)
+              if (embedUrl) {
+                return (
+                  <div key={`block-${index}`} className="mt-4 rounded overflow-hidden border" style={{ borderColor: accentColor }}>
+                    <iframe
+                      src={embedUrl}
+                      title="video"
+                      className="w-full aspect-video"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                )
+              }
+              return (
+                <a
+                  key={`block-${index}`}
+                  href={value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-4 px-4 py-2 rounded border"
+                  style={{ borderColor: accentColor }}
+                >
+                  {t('watchVideo')}
+                </a>
+              )
+            }
+
+            return null
+          })}
         </div>
       </main>
     </>

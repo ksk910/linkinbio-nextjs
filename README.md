@@ -113,4 +113,46 @@ npm run prisma:migrate:prod
 
 これにより、プロダクション環境でのマイグレーションを CI/CD の一部として簡単に実行できます。
 
+## DBマイグレーション運用（PH1-DOM-03）
+
+運用手順とロールバック方針は以下を参照してください。
+
+- docs/db-migration-runbook.md
+
+よく使うコマンド:
+
+- npm run prisma:migrate:status
+- npm run prisma:migrate:dev -- --name <change_name>
+- npm run prisma:migrate:deploy
+- npm run prisma:migrate:resolve:rolledback -- <migration_name>
+
+ブラウザ互換データ更新（E2E実行時の browserslist 警告対策）:
+
+- npm run browsers:update
+
+## 監視ダッシュボード（PH1-OPS-04）
+
+監視 API とアラート閾値の定義は以下を参照してください。
+
+- docs/monitoring-dashboard.md
+
+## Phase 3 の運用メモ
+
+Phase 3 では、以下の運用観点を優先的に整備しています。
+
+- analytics イベントのレート制限による過負荷抑止
+- 公開プロフィール API のキャッシュ/セキュリティヘッダー強化
+- 監視ダッシュボードとアラート閾値の運用ルール整理
+- ロールバック・秘密情報管理などの運用手順整理
+
+詳細は以下を参照してください。
+
+- docs/phase3-todo.md
+
+## Phase 1 完了判定（PH1-QA-03）
+
+Phase 1 のトレーサビリティと完了判定レポートは以下を参照してください。
+
+- docs/phase1-completion-report.md
+
 

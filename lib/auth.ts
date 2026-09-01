@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { NextApiRequest } from 'next'
+import { randomBytes } from 'crypto'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret'
 
@@ -36,4 +37,8 @@ export function getTokenFromReq(req: NextApiRequest) {
   if (!cookie) return null
   const match = cookie.match(/token=([^;]+)/)
   return match ? match[1] : null
+}
+
+export function generateOpaqueToken(size = 32) {
+  return randomBytes(size).toString('hex')
 }

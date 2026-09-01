@@ -5,10 +5,23 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "prisma migrate resolve --rolled-back 20260112151322_add_slug_to_profile || true && prisma migrate deploy && prisma generate && next build",
+    "test:api": "tsx --test tests/api/**/*.test.ts",
+    "test:ops": "tsx --test tests/api/ops.integration.test.ts",
+    "test:e2e": "pkill -f \"next\" || true && playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "benchmark:perf": "tsx scripts/perf-benchmark.ts",
+    "browsers:update": "update-browserslist-db --update-db",
+    "vercel-build": "prisma migrate deploy && prisma generate && next build",
+    "deploy": "npx vercel --prod 2>&1 | tee /tmp/vdeploy.txt && npx vercel alias $(grep -oE 'https://linkinbio-[a-z0-9]+-keisuke-kudos-projects\\.vercel\\.app' /tmp/vdeploy.txt | head -1) implink.link && npx vercel alias $(grep -oE 'https://linkinbio-[a-z0-9]+-keisuke-kudos-projects\\.vercel\\.app' /tmp/vdeploy.txt | head -1) www.implink.link",
     "start": "next start",
     "start:prod": "NODE_ENV=production npm run start",
     "prisma": "prisma",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:status": "prisma migrate status",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:resolve:applied": "prisma migrate resolve --applied",
+    "prisma:migrate:resolve:rolledback": "prisma migrate resolve --rolled-back",
     "prisma:migrate:prod": "prisma migrate deploy"
   },
   "dependencies": {
@@ -20,16 +33,21 @@
     "jsonwebtoken": "^9.0.0",
     "next": "^13.4.10",
     "next-intl": "^4.7.0",
+    "qrcode": "^1.5.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "resend": "^6.18.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "24.7.1",
     "@types/react": "19.2.2",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.24",
     "prisma": "^5.0.0",
     "tailwindcss": "^3.4.7",
-    "typescript": "^5.1.6"
+    "tsx": "^4.22.4",
+    "typescript": "^5.1.6",
+    "update-browserslist-db": "^1.2.3"
   }
 }

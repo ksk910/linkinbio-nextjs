@@ -10,13 +10,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [needsVerification, setNeedsVerification] = useState(false)
   const router = useRouter()
 
   const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+  const getRateLimitMessage = (resp: Response) => {
+    const retryAfterRaw = Number(resp.headers.get('retry-after') || '60')
+    const seconds = Number.isFinite(retryAfterRaw) && retryAfterRaw > 0 ? Math.ceil(retryAfterRaw) : 60
+    return t('rateLimited', { seconds })
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setNeedsVerification(false)
     if (!validateEmail(email)) {
       setMessage(t('invalidEmail'))
       return
@@ -32,6 +40,15 @@ export default function LoginPage() {
       })
       const data = await resp.json().catch(() => ({}))
       if (!resp.ok) {
+        if (data?.error === 'rate_limited' || resp.status === 429) {
+          setMessage(getRateLimitMessage(resp))
+          return
+        }
+        if (data?.error === 'email_not_verified') {
+          setNeedsVerification(true)
+          setMessage(t('emailNotVerified'))
+          return
+        }
         setMessage(data?.error === 'invalid' ? t('invalidCredentials') : t('loginFailed'))
         return
       }
@@ -47,10 +64,46 @@ export default function LoginPage() {
     }
   }
 
+  const onResendVerification = async () => {
+    if (!validateEmail(email)) {
+      setMessage(t('invalidEmail'))
+      return
+    }
+
+    setResending(true)
+    try {
+      const resp = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await resp.json().catch(() => ({}))
+      if (!resp.ok) {
+        if (data?.error === 'rate_limited' || resp.status === 429) {
+          setMessage(getRateLimitMessage(resp))
+          return
+        }
+        setMessage(data?.error || t('resendFailed'))
+        return
+      }
+
+      if (data?.verificationToken) {
+        router.push(`/verify-email?token=${encodeURIComponent(data.verificationToken as string)}`)
+        return
+      }
+
+      setMessage(t('resendSuccess'))
+    } catch (err: any) {
+      setMessage(err?.message || t('resendFailed'))
+    } finally {
+      setResending(false)
+    }
+  }
+
   return (
     <>
       <Head>
-        <title>{t('title')} | Link in Bio</title>
+        <title>{`${t('title')} | Link in Bio`}</title>
       </Head>
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-md mx-auto p-6">
@@ -89,8 +142,21 @@ export default function LoginPage() {
           {message && (
             <p className="mt-3 text-sm text-red-600">{message}</p>
           )}
+          {needsVerification && (
+            <button
+              type="button"
+              onClick={onResendVerification}
+              disabled={resending}
+              className="mt-3 text-sm text-blue-600 underline disabled:opacity-60"
+            >
+              {resending ? t('resending') : t('resendVerification')}
+            </button>
+          )}
           <p className="mt-6 text-sm">
             {t('noAccount')} <a href="/signup" className="text-blue-600 underline">{t('signupLink')}</a>
+          </p>
+          <p className="mt-2 text-sm">
+            <a href="/forgot-password" className="text-blue-600 underline">{t('forgotPassword')}</a>
           </p>
         </div>
       </main>

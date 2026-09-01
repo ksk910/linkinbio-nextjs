@@ -19,5 +19,11 @@ jobs:
         run: npm ci
       - name: Prisma generate
         run: npx prisma generate
+      - name: Run API tests
+        run: npm run test:api
+      - name: Run performance benchmark
+        run: npm run benchmark:perf
+      - name: Run E2E smoke tests
+        run: npm run test:e2e
       - name: Build
         run: npm run build

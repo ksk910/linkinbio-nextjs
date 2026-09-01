@@ -14,7 +14,12 @@ export default function SignupPage() {
   const router = useRouter()
 
   const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
-  const validatePassword = (p: string) => p.length >= 6
+  const validatePassword = (p: string) => p.length >= 8
+  const getRateLimitMessage = (resp: Response) => {
+    const retryAfterRaw = Number(resp.headers.get('retry-after') || '60')
+    const seconds = Number.isFinite(retryAfterRaw) && retryAfterRaw > 0 ? Math.ceil(retryAfterRaw) : 60
+    return t('rateLimited', { seconds })
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,38 +40,34 @@ export default function SignupPage() {
         body: JSON.stringify({ email, password }),
         credentials: 'include',
       })
-      const data = await resp.json()
+      let data: any = null
+      const contentType = resp.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        data = await resp.json()
+      } else {
+        await resp.text()
+      }
+
       if (!resp.ok) {
         if (data?.error === 'exists') {
-          // 既存ユーザーなら自動的にログインを試みる
-          const login = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-            credentials: 'include',
-          })
-          if (login.ok) {
-            const loginData = await login.json().catch(() => ({}))
-            if (loginData?.token && typeof window !== 'undefined') {
-              localStorage.setItem('token', loginData.token)
-            }
-            router.push('/profile/edit')
-            return
-          }
           setMessage(t('emailExists'))
+        } else if (data?.error === 'rate_limited' || resp.status === 429) {
+          setMessage(getRateLimitMessage(resp))
+        } else if (data?.error === 'server_error') {
+          setMessage(t('serverError'))
         } else {
           setMessage(data?.error || t('signupFailed'))
         }
       } else {
-        setMessage(t('signupSuccess'))
-        if (data?.token && typeof window !== 'undefined') {
-          localStorage.setItem('token', data.token)
+        if (data?.verificationToken) {
+          router.push(`/verify-email?token=${encodeURIComponent(data.verificationToken as string)}`)
+          return
         }
-        // サインアップ後、まずプロフィール編集ページへ
-        router.push('/profile/edit')
+
+        setMessage(t('signupSuccessVerify'))
       }
     } catch (err: any) {
-      setMessage(err?.message || 'Unexpected error')
+      setMessage(err?.message || t('signupFailed'))
     } finally {
       setLoading(false)
     }
@@ -75,7 +76,7 @@ export default function SignupPage() {
   return (
     <>
       <Head>
-        <title>{t('title')} | Link in Bio</title>
+        <title>{`${t('title')} | Link in Bio`}</title>
       </Head>
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-md mx-auto p-6">
@@ -118,10 +119,10 @@ export default function SignupPage() {
           )}
           <div className="mt-6 text-sm">
             <p>
-              {t('afterSignup')} <a href="/profile/edit" className="text-blue-600 underline">/profile/edit</a>
+              {t('afterSignup')} <a href="/login" className="text-blue-600 underline">/login</a>
             </p>
             <p className="mt-1">
-              {t('manageLinks')} <a href="/profile/links" className="text-blue-600 underline">/profile/links</a>
+              {t('manageLinks')} <a href="/verify-email" className="text-blue-600 underline">/verify-email</a>
             </p>
           </div>
         </div>

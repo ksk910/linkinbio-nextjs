@@ -12,3 +12,6 @@ yarn-error.log
 dist
 coverage
 .vercel
+playwright-report
+test-results
+.env*

@@ -6,6 +6,18 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { NextIntlClientProvider, useTranslations } from 'next-intl'
 import LanguageSwitcher from '../components/LanguageSwitcher'
+import jaMessages from '../locales/ja/common.json'
+
+const PUBLIC_PATHNAMES = new Set([
+  '/',
+  '/404',
+  '/login',
+  '/signup',
+  '/verify-email',
+  '/forgot-password',
+  '/reset-password',
+  '/p/[id]',
+])
 
 function Header() {
   const t = useTranslations('header')
@@ -17,6 +29,13 @@ function Header() {
   const checkAuth = async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      // Public pages without a client token do not need an auth probe.
+      if (!token && PUBLIC_PATHNAMES.has(router.pathname)) {
+        setAvatarUrl(null)
+        setLoggedIn(false)
+        return
+      }
+
       const res = await fetch('/api/profile', {
         credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -112,16 +131,85 @@ function Header() {
   )
 }
 
+function ClientErrorReporter() {
+  const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const sendClientError = async (payload: Record<string, unknown>) => {
+      try {
+        await fetch('/api/monitoring/client-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        })
+      } catch {
+        // Avoid cascading failures when telemetry endpoint is unavailable.
+      }
+    }
+
+    const onError = (event: ErrorEvent) => {
+      const message = event.message || 'window_error'
+      void sendClientError({
+        message,
+        stack: event.error instanceof Error ? event.error.stack : undefined,
+        route: router.asPath,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      })
+    }
+
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason
+      const message = reason instanceof Error ? reason.message : String(reason || 'unhandled_rejection')
+      void sendClientError({
+        message,
+        stack: reason instanceof Error ? reason.stack : undefined,
+        route: router.asPath,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      })
+    }
+
+    const onRouteChangeError = (error: unknown, url: string) => {
+      const message = error instanceof Error ? error.message : String(error || 'route_change_error')
+      void sendClientError({
+        message,
+        stack: error instanceof Error ? error.stack : undefined,
+        route: url,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      })
+    }
+
+    window.addEventListener('error', onError)
+    window.addEventListener('unhandledrejection', onUnhandledRejection)
+    router.events.on('routeChangeError', onRouteChangeError)
+
+    return () => {
+      window.removeEventListener('error', onError)
+      window.removeEventListener('unhandledrejection', onUnhandledRejection)
+      router.events.off('routeChangeError', onRouteChangeError)
+    }
+  }, [router])
+
+  return null
+}
+
 export default function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
+  const messages = pageProps.messages || jaMessages
   
   return (
     <NextIntlClientProvider 
       locale={router.locale || 'ja'}
-      messages={pageProps.messages}
+      messages={messages}
       timeZone="Asia/Tokyo"
     >
       <div className="min-h-screen flex flex-col">
+        <ClientErrorReporter />
         <Header />
         <main className="flex-1">
           <Component {...pageProps} />

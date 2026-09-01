@@ -121,7 +121,7 @@ function SocialIcon({ type, url }: { type: string; url: string }) {
   )
 }
 
-export default function ProfilePage({ profile }: any) {
+export default function ProfilePage({ profile, shareUrl }: any) {
   const t = useTranslations('common')
   const [qrCodeSvg, setQrCodeSvg] = useState('')
 
@@ -139,15 +139,14 @@ export default function ProfilePage({ profile }: any) {
       setQrCodeSvg('')
       return
     }
-    if (typeof window === 'undefined') {
+    if (!shareUrl) {
       setQrCodeSvg('')
       return
     }
-    const targetUrl = window.location.href
-    buildQrSvg(targetUrl, { width: 180, margin: 1, logoUrl: profile?.avatarUrl || undefined })
+    buildQrSvg(shareUrl, { width: 180, margin: 1, logoUrl: profile?.avatarUrl || undefined })
       .then((svg) => setQrCodeSvg(svg))
       .catch(() => setQrCodeSvg(''))
-  }, [profile?.id])
+  }, [profile?.id, shareUrl])
   
   if (!profile) return <div className="p-6">{t('notFound')}</div>
 
@@ -224,7 +223,7 @@ export default function ProfilePage({ profile }: any) {
         <meta property="og:title" content={profile.displayName || 'Link in Bio'} />
         <meta property="og:description" content={profile.bio || 'Personal profile and links'} />
         <meta property="og:image" content={`/api/og?name=${encodeURIComponent(profile.displayName || 'Link in Bio')}&bio=${encodeURIComponent(profile.bio || '')}`} />
-        <meta property="og:url" content={`https://linkinbio-ruby.vercel.app/p/${profile.id}`} />
+        <meta property="og:url" content={shareUrl} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={profile.displayName || 'Link in Bio'} />
         <meta name="twitter:description" content={profile.bio || 'Personal profile and links'} />
@@ -282,7 +281,7 @@ export default function ProfilePage({ profile }: any) {
                       <div className="text-sm font-semibold mb-2">{t('qrCode')}</div>
                       <p className="text-xs opacity-70 mb-3">{t('qrCodeHint')}</p>
                       <div className="flex justify-center rounded-lg bg-white p-3" dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
-                      <p className="text-[11px] mt-2 opacity-70 break-all">{`https://linkinbio-ruby.vercel.app/p/${profile.id}`}</p>
+                      <p className="text-[11px] mt-2 opacity-70 break-all">{shareUrl}</p>
                     </div>
                   ) : null}
                   {renderLinks()}
@@ -367,20 +366,22 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       if (respById.status === 404) return { notFound: true }
       if (!respById.ok) throw new Error(`API error: ${respById.status}`)
       const profile = await respById.json()
-      return { 
-        props: { 
+      return {
+        props: {
           profile,
+          shareUrl: `${baseUrl}/p/${id}`,
           messages: await getMessages(ctx.locale || 'ja')
-        } 
+        }
       }
     }
     if (!resp.ok) throw new Error(`API error: ${resp.status}`)
     const profile = await resp.json()
-    return { 
-      props: { 
+    return {
+      props: {
         profile,
+        shareUrl: `${baseUrl}/p/${id}`,
         messages: await getMessages(ctx.locale || 'ja')
-      } 
+      }
     }
   } catch (e) {
     console.error('SSR profile load error', e)

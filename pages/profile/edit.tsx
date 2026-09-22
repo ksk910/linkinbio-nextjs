@@ -14,7 +14,7 @@ const templates = [
   { key: 'mint', nameKey: 'themeMint', backgroundColor: '#ecfdf3', textColor: '#064e3b', accentColor: '#10b981' },
 ]
 
-type BlockType = 'profile' | 'headline' | 'bio' | 'links' | 'icon' | 'line' | 'video'
+type BlockType = 'profile' | 'headline' | 'bio' | 'links' | 'icon' | 'line' | 'video' | 'music'
 type BlockItem = { id: string; type: BlockType; content: string; order: number }
 type LineStyle = 'solid' | 'dashed' | 'dotted' | 'double'
 
@@ -63,6 +63,35 @@ function getEmbeddedVideoUrl(rawUrl: string): string | null {
     if (host.includes('vimeo.com')) {
       const id = url.pathname.split('/').filter(Boolean)[0]
       return id ? `https://player.vimeo.com/video/${id}` : null
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+type MusicEmbed = { url: string; kind: 'fixed'; height: number } | { url: string; kind: 'video' }
+
+function getEmbeddedMusicUrl(rawUrl: string): MusicEmbed | null {
+  try {
+    const url = new URL(rawUrl)
+    const host = url.hostname.toLowerCase()
+    if (host.includes('open.spotify.com')) {
+      const segments = url.pathname.split('/').filter(Boolean).filter((seg) => !/^intl-[a-z]{2}$/i.test(seg))
+      const [resourceType, id] = segments
+      if (!resourceType || !id) return null
+      const height = resourceType === 'track' || resourceType === 'episode' ? 152 : 352
+      return { url: `https://open.spotify.com/embed/${resourceType}/${id}`, kind: 'fixed', height }
+    }
+    if (host.includes('music.apple.com')) {
+      const embedUrl = rawUrl.replace(/music\.apple\.com/i, 'embed.music.apple.com')
+      const height = url.searchParams.has('i') ? 175 : 450
+      return { url: embedUrl, kind: 'fixed', height }
+    }
+    if (host.includes('music.youtube.com') || host.includes('youtu.be') || host.includes('youtube.com')) {
+      const videoUrl = getEmbeddedVideoUrl(rawUrl)
+      if (!videoUrl) return null
+      return { url: videoUrl, kind: 'video' }
     }
   } catch {
     return null
@@ -870,6 +899,7 @@ export default function ProfileEdit() {
                     <option value="icon">{t('blockTypeIcon')}</option>
                     <option value="line">{t('blockTypeLine')}</option>
                     <option value="video">{t('blockTypeVideo')}</option>
+                    <option value="music">{t('blockTypeMusic')}</option>
                   </select>
                   <button type="button" className="btn" onClick={() => moveBlock(index, -1)} disabled={index === 0}>↑</button>
                   <button type="button" className="btn" onClick={() => moveBlock(index, 1)} disabled={index === blocks.length - 1}>↓</button>
@@ -884,7 +914,9 @@ export default function ProfileEdit() {
                         ? t('blockContentPlaceholderIcon')
                         : block.type === 'video'
                           ? t('blockContentPlaceholderVideo')
-                          : t('blockContentPlaceholder')
+                          : block.type === 'music'
+                            ? t('blockContentPlaceholderMusic')
+                            : t('blockContentPlaceholder')
                     }
                     maxLength={
                       block.type === 'headline'
@@ -958,6 +990,37 @@ export default function ProfileEdit() {
                         />
                       </div>
                     )}
+                  </div>
+                )}
+                {block.type === 'music' && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500">{t('blockMusicHint')}</p>
+                    {(() => {
+                      const embed = getEmbeddedMusicUrl(block.content.trim())
+                      if (!embed) return null
+                      return (
+                        <div className="rounded border overflow-hidden">
+                          {embed.kind === 'video' ? (
+                            <iframe
+                              src={embed.url}
+                              title="music-preview"
+                              className="w-full aspect-video"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            <iframe
+                              src={embed.url}
+                              title="music-preview"
+                              className="w-full"
+                              style={{ height: embed.height }}
+                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                              loading="lazy"
+                            />
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 )}
                 {(block.type === 'links' || block.type === 'profile') && (

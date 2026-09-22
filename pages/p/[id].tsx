@@ -62,6 +62,35 @@ function getEmbeddedVideoUrl(rawUrl: string): string | null {
   return null
 }
 
+type MusicEmbed = { url: string; kind: 'fixed'; height: number } | { url: string; kind: 'video' }
+
+function getEmbeddedMusicUrl(rawUrl: string): MusicEmbed | null {
+  try {
+    const url = new URL(rawUrl)
+    const host = url.hostname.toLowerCase()
+    if (host.includes('open.spotify.com')) {
+      const segments = url.pathname.split('/').filter(Boolean).filter((seg) => !/^intl-[a-z]{2}$/i.test(seg))
+      const [resourceType, id] = segments
+      if (!resourceType || !id) return null
+      const height = resourceType === 'track' || resourceType === 'episode' ? 152 : 352
+      return { url: `https://open.spotify.com/embed/${resourceType}/${id}`, kind: 'fixed', height }
+    }
+    if (host.includes('music.apple.com')) {
+      const embedUrl = rawUrl.replace(/music\.apple\.com/i, 'embed.music.apple.com')
+      const height = url.searchParams.has('i') ? 175 : 450
+      return { url: embedUrl, kind: 'fixed', height }
+    }
+    if (host.includes('music.youtube.com') || host.includes('youtu.be') || host.includes('youtube.com')) {
+      const videoUrl = getEmbeddedVideoUrl(rawUrl)
+      if (!videoUrl) return null
+      return { url: videoUrl, kind: 'video' }
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
 // SNS アイコンコンポーネント
 function SocialIcon({ type, url }: { type: string; url: string }) {
   const iconClasses = 'w-6 h-6 hover:opacity-80 transition-opacity'
@@ -340,6 +369,48 @@ export default function ProfilePage({ profile, shareUrl }: any) {
                   style={{ borderColor: accentColor }}
                 >
                   {t('watchVideo')}
+                </a>
+              )
+            }
+
+            if (block.type === 'music') {
+              const value = String(block.content || '').trim()
+              if (!value) return null
+              const embed = getEmbeddedMusicUrl(value)
+              if (embed) {
+                return (
+                  <div key={`block-${index}`} className="mt-4 rounded overflow-hidden border" style={{ borderColor: accentColor }}>
+                    {embed.kind === 'video' ? (
+                      <iframe
+                        src={embed.url}
+                        title="music"
+                        className="w-full aspect-video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <iframe
+                        src={embed.url}
+                        title="music"
+                        className="w-full"
+                        style={{ height: embed.height }}
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                      />
+                    )}
+                  </div>
+                )
+              }
+              return (
+                <a
+                  key={`block-${index}`}
+                  href={value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-4 px-4 py-2 rounded border"
+                  style={{ borderColor: accentColor }}
+                >
+                  {t('listenMusic')}
                 </a>
               )
             }

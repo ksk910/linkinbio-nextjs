@@ -5,7 +5,7 @@ import { assertCsrf } from '../../../lib/csrf'
 import { logError, requestMeta } from '../../../lib/logger'
 import { normalizeRequestBody, validateLinkTarget } from '../../../lib/validation'
 
-const ALLOWED_BLOCK_TYPES = new Set(['profile', 'headline', 'bio', 'links', 'icon', 'line', 'video'])
+const ALLOWED_BLOCK_TYPES = new Set(['profile', 'headline', 'bio', 'links', 'icon', 'line', 'video', 'music'])
 
 function normalizeAndValidateBlocks(rawBlocks: any[]): { ok: true; value: Array<{ type: string; content: string | null; order: number }> } | { ok: false; error: string } {
   const normalized: Array<{ type: string; content: string | null; order: number }> = []
@@ -37,6 +37,10 @@ function normalizeAndValidateBlocks(rawBlocks: any[]): { ok: true; value: Array<
     if (type === 'video') {
       if (!contentRaw) return { ok: false, error: 'block_video_required' }
       if (!/^https?:\/\//i.test(contentRaw)) return { ok: false, error: 'block_video_url_invalid' }
+    }
+    if (type === 'music') {
+      if (!contentRaw) return { ok: false, error: 'block_music_required' }
+      if (!/^https?:\/\//i.test(contentRaw)) return { ok: false, error: 'block_music_url_invalid' }
     }
 
     normalized.push({

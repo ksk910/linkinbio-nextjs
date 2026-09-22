@@ -90,8 +90,17 @@ function getEmbeddedMusicUrl(rawUrl: string): MusicEmbed | null {
     }
     if (host.includes('music.youtube.com') || host.includes('youtu.be') || host.includes('youtube.com')) {
       const videoUrl = getEmbeddedVideoUrl(rawUrl)
-      if (!videoUrl) return null
-      return { url: videoUrl, kind: 'video' }
+      if (videoUrl) return { url: videoUrl, kind: 'video' }
+
+      const listId = url.searchParams.get('list')
+      if (listId) return { url: `https://www.youtube.com/embed/videoseries?list=${listId}`, kind: 'video' }
+
+      const parts = url.pathname.split('/').filter(Boolean)
+      if (parts[0] === 'browse' && parts[1]) {
+        const playlistId = parts[1].startsWith('VL') ? parts[1].slice(2) : parts[1]
+        return { url: `https://www.youtube.com/embed/videoseries?list=${playlistId}`, kind: 'video' }
+      }
+      return null
     }
   } catch {
     return null

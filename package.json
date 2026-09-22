@@ -12,7 +12,7 @@
     "benchmark:perf": "tsx scripts/perf-benchmark.ts",
     "browsers:update": "update-browserslist-db --update-db",
     "vercel-build": "prisma migrate deploy && prisma generate && next build",
-    "deploy": "npx vercel --prod 2>&1 | tee /tmp/vdeploy.txt && npx vercel alias $(grep -oE 'https://linkinbio-[a-z0-9]+-keisuke-kudos-projects\\.vercel\\.app' /tmp/vdeploy.txt | head -1) implink.link && npx vercel alias $(grep -oE 'https://linkinbio-[a-z0-9]+-keisuke-kudos-projects\\.vercel\\.app' /tmp/vdeploy.txt | head -1) www.implink.link",
+    "deploy": "set -e\nset -o pipefail\nnpx vercel --prod 2>&1 | tee /tmp/vdeploy.txt\nDEPLOY_URL=$(grep -oE 'https://linkinbio-[a-z0-9]+-keisuke-kudos-projects\\.vercel\\.app' /tmp/vdeploy.txt | head -1)\nif [ -z \"$DEPLOY_URL\" ]; then echo 'Deploy failed: no deployment URL found in vercel output' >&2; exit 1; fi\nnpx vercel alias \"$DEPLOY_URL\" implink.link\nnpx vercel alias \"$DEPLOY_URL\" www.implink.link",
     "start": "next start",
     "start:prod": "NODE_ENV=production npm run start",
     "prisma": "prisma",

@@ -34,7 +34,7 @@ export function assertCsrf(req: NextApiRequest): CsrfResult {
   return { ok: true }
 }
 
-function getExpectedOrigin(req: NextApiRequest): string {
+export function getExpectedOrigin(req: NextApiRequest): string {
   const forwardedProto = headerString(req.headers['x-forwarded-proto'])
   const proto = forwardedProto || (process.env.NODE_ENV === 'production' ? 'https' : 'http')
   const host =

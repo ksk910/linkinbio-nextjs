@@ -46,4 +46,6 @@ export const authRateLimits = {
     10 * 60 * 1000,
   ),
   resetPasswordIp: setting('AUTH_RESET_PASSWORD_RATE_LIMIT', 15, 'AUTH_RESET_PASSWORD_RATE_WINDOW_MS', 60_000),
+  oauthStartIp: setting('AUTH_OAUTH_START_RATE_LIMIT', 20, 'AUTH_OAUTH_START_RATE_WINDOW_MS', 60_000),
+  oauthCallbackIp: setting('AUTH_OAUTH_CALLBACK_RATE_LIMIT', 20, 'AUTH_OAUTH_CALLBACK_RATE_WINDOW_MS', 60_000),
 }

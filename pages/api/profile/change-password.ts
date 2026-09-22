@@ -62,6 +62,10 @@ export default async function handler(
       return res.status(404).json({ error: 'User not found' })
     }
 
+    if (!user.password) {
+      return res.status(400).json({ error: 'password_login_unavailable' })
+    }
+
     // 現在のパスワードを検証
     const isPasswordValid = await verifyPassword(currentPassword, user.password)
     if (!isPasswordValid) {

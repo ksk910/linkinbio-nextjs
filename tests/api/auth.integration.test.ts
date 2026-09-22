@@ -225,6 +225,31 @@ test('AUTH login blocks unverified user', async () => {
   }
 })
 
+test('AUTH login blocks password login for Google-only accounts', async () => {
+  const originalFindUnique = prisma.user.findUnique
+  ;(prisma.user.findUnique as any) = async () => ({
+    id: 'user_google_only_1',
+    email: 'google-only@example.com',
+    password: null,
+    emailVerifiedAt: new Date(),
+  })
+
+  const req = createMockReq({
+    method: 'POST',
+    body: { email: 'google-only@example.com', password: 'password123' },
+    headers: { 'x-forwarded-for': '198.51.100.33' },
+  })
+  const res = createMockRes()
+
+  try {
+    await loginHandler(req, res)
+    assert.equal(res.statusCode, 400)
+    assert.deepEqual(res.jsonBody, { error: 'password_login_unavailable' })
+  } finally {
+    ;(prisma.user.findUnique as any) = originalFindUnique
+  }
+})
+
 test('AUTH verify-email marks account verified with valid token', async () => {
   const originalFindFirst = (prisma.user as any).findFirst
   const originalUpdate = prisma.user.update

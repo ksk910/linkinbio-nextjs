@@ -42,3 +42,14 @@ export function getTokenFromReq(req: NextApiRequest) {
 export function generateOpaqueToken(size = 32) {
   return randomBytes(size).toString('hex')
 }
+
+export function buildAuthCookie(token: string): string {
+  const maxAge = 60 * 60 * 24 * 7
+  const cookieParts = [`token=${token}`, `HttpOnly`, `Path=/`, `Max-Age=${maxAge}`]
+  if (process.env.NODE_ENV === 'production') {
+    cookieParts.push('Secure', 'SameSite=Lax')
+  } else {
+    cookieParts.push('SameSite=Lax')
+  }
+  return cookieParts.join('; ')
+}

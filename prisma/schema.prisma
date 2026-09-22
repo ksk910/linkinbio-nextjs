@@ -10,14 +10,26 @@ datasource db {
 model User {
   id                         String    @id @default(cuid())
   email                      String    @unique
-  password                   String
+  password                   String?
   emailVerifiedAt            DateTime?
   emailVerificationToken     String?   @unique
   emailVerificationExpiresAt DateTime?
   resetPasswordToken         String?   @unique
   resetPasswordExpiresAt     DateTime?
   profile                    Profile?
+  oauthAccounts              OAuthAccount[]
   createdAt                  DateTime  @default(now())
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  provider          String
+  providerAccountId String
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
 }
 
 model Profile {

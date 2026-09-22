@@ -26,7 +26,13 @@
     "resendFailed": "確認メールの再送に失敗しました",
     "noAccount": "アカウントがない場合は",
     "signupLink": "サインアップ",
-    "forgotPassword": "パスワードを忘れた場合"
+    "forgotPassword": "パスワードを忘れた場合",
+    "continueWithGoogle": "Googleで続ける",
+    "orDivider": "または",
+    "oauthCancelled": "Googleログインがキャンセルされました",
+    "oauthFailed": "Googleログインに失敗しました。もう一度お試しください",
+    "oauthEmailUnverified": "Googleアカウントのメールアドレスが確認されていません",
+    "passwordLoginUnavailable": "このアカウントはGoogleログインで作成されています。Googleでログインしてください"
   },
   "signup": {
     "title": "サインアップ",
@@ -45,7 +51,12 @@
     "signupSuccessVerify": "登録完了。メール確認後にログインしてください",
     "signupFailed": "サインアップに失敗しました",
     "afterSignup": "サインアップ後、プロフィールを編集:",
-    "manageLinks": "リンクを管理:"
+    "manageLinks": "リンクを管理:",
+    "continueWithGoogle": "Googleで登録",
+    "orDivider": "または",
+    "oauthCancelled": "Googleログインがキャンセルされました",
+    "oauthFailed": "Googleログインに失敗しました。もう一度お試しください",
+    "oauthEmailUnverified": "Googleアカウントのメールアドレスが確認されていません"
   },
   "verifyEmail": {
     "title": "メール確認",

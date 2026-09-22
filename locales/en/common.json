@@ -26,7 +26,13 @@
     "resendFailed": "Failed to resend verification email",
     "noAccount": "Don't have an account?",
     "signupLink": "Sign up",
-    "forgotPassword": "Forgot password?"
+    "forgotPassword": "Forgot password?",
+    "continueWithGoogle": "Continue with Google",
+    "orDivider": "or",
+    "oauthCancelled": "Google login was cancelled",
+    "oauthFailed": "Google login failed. Please try again",
+    "oauthEmailUnverified": "Your Google account's email address is not verified",
+    "passwordLoginUnavailable": "This account was created with Google login. Please log in with Google instead"
   },
   "signup": {
     "title": "Sign Up",
@@ -45,7 +51,12 @@
     "signupSuccessVerify": "Registration completed. Verify your email before login",
     "signupFailed": "Sign up failed",
     "afterSignup": "After signup, edit your profile:",
-    "manageLinks": "Manage links here:"
+    "manageLinks": "Manage links here:",
+    "continueWithGoogle": "Sign up with Google",
+    "orDivider": "or",
+    "oauthCancelled": "Google login was cancelled",
+    "oauthFailed": "Google login failed. Please try again",
+    "oauthEmailUnverified": "Your Google account's email address is not verified"
   },
   "verifyEmail": {
     "title": "Verify Email",

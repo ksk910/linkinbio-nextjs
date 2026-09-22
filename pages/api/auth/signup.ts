@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '../../../lib/prisma'
-import { generateOpaqueToken, hashPassword, signToken } from '../../../lib/auth'
+import { generateOpaqueToken, hashPassword, signToken, buildAuthCookie } from '../../../lib/auth'
 import { checkRateLimit, getClientIp } from '../../../lib/rate-limit'
 import { authRateLimits } from '../../../lib/rate-limit-config'
 import { logError, logWarn, requestMeta } from '../../../lib/logger'
@@ -52,15 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     })
     const token = signToken({ userId: user.id })
-    // Set cookie with secure flags in production
-    const maxAge = 60 * 60 * 24 * 7
-    const cookieParts = [`token=${token}`, `HttpOnly`, `Path=/`, `Max-Age=${maxAge}`]
-    if (process.env.NODE_ENV === 'production') {
-      cookieParts.push('Secure', 'SameSite=Lax')
-    } else {
-      cookieParts.push('SameSite=Lax')
-    }
-    res.setHeader('Set-Cookie', cookieParts.join('; '))
+    res.setHeader('Set-Cookie', buildAuthCookie(token))
     // メール送信（失敗しても登録自体は成功とする）
     try {
       await sendVerificationEmail({ to: email, token: verificationToken })

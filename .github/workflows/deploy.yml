@@ -21,6 +21,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma migrate deploy
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
       - name: Run CI checks
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

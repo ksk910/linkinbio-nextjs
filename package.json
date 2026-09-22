@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test:api": "tsx --test tests/api/**/*.test.ts",
+    "test:api": "tsx --test $(find tests/api -name '*.test.ts')",
     "test:ops": "tsx --test tests/api/ops.integration.test.ts",
     "test:e2e": "pkill -f \"next\" || true && playwright test",
     "test:e2e:headed": "playwright test --headed",

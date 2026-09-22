@@ -18,7 +18,7 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   webServer: {
-    command: 'pkill -f "next dev" || true; rm -rf .next; npm run dev',
+    command: 'pkill -f "[n]ext dev" || true; rm -rf .next; npm run dev',
     url: 'http://localhost:3000/login',
     reuseExistingServer: false,
     timeout: 180_000,

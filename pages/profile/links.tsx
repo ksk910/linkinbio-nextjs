@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GetServerSideProps } from 'next'
 import { verifyToken } from '../../lib/auth'
 import { useTranslations } from 'next-intl'
@@ -45,6 +45,9 @@ export default function LinksPage() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // 初回ロードのfetchより後にユーザーがリンクを追加/削除/更新/並び替えした場合、
+  // 遅れて届いた初回ロードのレスポンスが最新のlinks状態を上書きしないようにするガード。
+  const linksMutatedRef = useRef(false)
 
   useEffect(() => {
     async function fetchProfile() {
@@ -55,7 +58,9 @@ export default function LinksPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setLinks(data?.links || [])
+        if (!linksMutatedRef.current) {
+          setLinks(data?.links || [])
+        }
         setSlug(data?.slug || null)
       }
       setLoading(false)
@@ -107,6 +112,7 @@ export default function LinksPage() {
 
     if (res.ok) {
       const l = await res.json()
+      linksMutatedRef.current = true
       setLinks((s) => [
         ...s,
         {
@@ -147,6 +153,7 @@ export default function LinksPage() {
     })
 
     if (res.ok) {
+      linksMutatedRef.current = true
       setLinks((s) => s.filter((x) => x.id !== id))
       setPendingDeleteId(null)
       setFeedback({ type: 'success', text: t('deleteSuccess') })
@@ -202,6 +209,7 @@ export default function LinksPage() {
       return
     }
 
+    linksMutatedRef.current = true
     setLinks((prev) => prev.map((item) => {
       if (item.id !== id) return item
       return {
@@ -247,6 +255,7 @@ export default function LinksPage() {
     newLinks.splice(draggedIndex, 1)
     newLinks.splice(index, 0, draggedItem)
 
+    linksMutatedRef.current = true
     setLinks(newLinks)
     setDraggedIndex(index)
   }

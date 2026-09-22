@@ -5,6 +5,10 @@ import { signToken } from '../../lib/auth'
 import { prisma } from '../../lib/prisma'
 import { createMockReq, createMockRes } from './helpers'
 
+function authHeader(userId: string) {
+  return `Bearer ${signToken({ userId })}`
+}
+
 test('ANALYTICS POST records view and click events', async () => {
   const created: Array<{ profileId: string; type: string; linkId: string | null }> = []
   const originalFindUnique = prisma.profile.findUnique
@@ -86,7 +90,7 @@ test('ANALYTICS GET supports a 30-day trend range', async () => {
     const req = createMockReq({
       method: 'GET',
       query: { profileId: 'profile_analytics_range', days: '30' },
-      headers: { host: 'localhost:3000' },
+      headers: { host: 'localhost:3000', authorization: authHeader('user_analytics_range') },
     })
     const res = createMockRes()
 
@@ -123,7 +127,7 @@ test('ANALYTICS GET returns top links breakdown', async () => {
     const req = createMockReq({
       method: 'GET',
       query: { profileId: 'profile_analytics_links' },
-      headers: { host: 'localhost:3000' },
+      headers: { host: 'localhost:3000', authorization: authHeader('user_analytics_links') },
     })
     const res = createMockRes()
 
@@ -168,7 +172,7 @@ test('ANALYTICS GET caps top links at five entries', async () => {
     const req = createMockReq({
       method: 'GET',
       query: { profileId: 'profile_analytics_top5' },
-      headers: { host: 'localhost:3000' },
+      headers: { host: 'localhost:3000', authorization: authHeader('user_analytics_top5') },
     })
     const res = createMockRes()
 
@@ -199,7 +203,7 @@ test('ANALYTICS GET defaults to a 7-day trend range', async () => {
     const req = createMockReq({
       method: 'GET',
       query: { profileId: 'profile_analytics_default_trend' },
-      headers: { host: 'localhost:3000' },
+      headers: { host: 'localhost:3000', authorization: authHeader('user_analytics_default_trend') },
     })
     const res = createMockRes()
 
@@ -233,7 +237,7 @@ test('ANALYTICS GET returns summary counts and insight summary', async () => {
     const req = createMockReq({
       method: 'GET',
       query: { profileId: 'profile_analytics_summary' },
-      headers: { host: 'localhost:3000' },
+      headers: { host: 'localhost:3000', authorization: authHeader('user_analytics_summary') },
     })
     const res = createMockRes()
 

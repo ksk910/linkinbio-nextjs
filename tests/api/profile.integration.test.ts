@@ -370,10 +370,19 @@ test('PROFILE link rejects invalid imageUrl format', async () => {
   }
 })
 
-test('PROFILE link returns no_profile when profile does not exist', async () => {
+test('PROFILE link auto-creates a fallback profile when none exists yet', async () => {
   const token = signToken({ userId: 'user_link_create_1' })
   const originalProfileFindUnique = prisma.profile.findUnique
+  const originalProfileCreate = prisma.profile.create
+  const originalLinkCreate = prisma.link.create
+
+  let createArgs: any = null
   ;(prisma.profile.findUnique as any) = async () => null
+  ;(prisma.profile.create as any) = async (args: any) => {
+    createArgs = args
+    return { id: 'profile_link_create_1', ...args.data }
+  }
+  ;(prisma.link.create as any) = async ({ data }: any) => ({ id: 'link_create_1', ...data })
 
   const req = createMockReq({
     method: 'POST',
@@ -391,10 +400,13 @@ test('PROFILE link returns no_profile when profile does not exist', async () => 
 
   try {
     await linkHandler(req, res)
-    assert.equal(res.statusCode, 400)
-    assert.deepEqual(res.jsonBody, { error: 'no_profile' })
+    assert.equal(res.statusCode, 200)
+    assert.equal((res.jsonBody as any).profileId, 'profile_link_create_1')
+    assert.deepEqual(createArgs.data, { userId: 'user_link_create_1', slug: 'user_link_create_1', accountStatus: 'active' })
   } finally {
     ;(prisma.profile.findUnique as any) = originalProfileFindUnique
+    ;(prisma.profile.create as any) = originalProfileCreate
+    ;(prisma.link.create as any) = originalLinkCreate
   }
 })
 

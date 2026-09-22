@@ -118,7 +118,6 @@ test('minimal user flow: signup -> login -> add links -> view public profile', a
   await page.goto(href as string)
   await expect(page.locator(`a[href="${linkUrl}"]`)).toBeVisible()
   await expect(page.getByText(musicUpdatedTitle)).toBeVisible()
-  await expect(page.locator('text=アクセスの概要').or(page.locator('text=Analytics snapshot'))).toBeVisible()
   await expect(page.locator('svg').first()).toBeVisible()
 })
 

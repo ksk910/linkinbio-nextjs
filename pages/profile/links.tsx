@@ -28,7 +28,6 @@ export default function LinksPage() {
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
-  const [icon, setIcon] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [hidden, setHidden] = useState(false)
   const [linkType, setLinkType] = useState<LinkType>('url')
@@ -81,7 +80,6 @@ export default function LinksPage() {
       title,
       url: normalized,
       type: linkType,
-      icon,
       imageUrl,
       hidden,
       order: 0,
@@ -108,14 +106,13 @@ export default function LinksPage() {
           url: l?.url ?? normalized,
           type: (l?.type ?? linkType) as LinkType,
           musicProvider: l?.musicProvider ?? null,
-          icon: (l?.icon ?? icon) || null,
+          icon: l?.icon ?? null,
           imageUrl: (l?.imageUrl ?? imageUrl) || null,
           hidden: typeof l?.hidden === 'boolean' ? l.hidden : hidden,
         },
       ])
       setTitle('')
       setUrl('')
-      setIcon('')
       setImageUrl('')
       setHidden(false)
       setLinkType('url')
@@ -323,7 +320,6 @@ export default function LinksPage() {
           <option value="imessage">{t('linkTypeImessage')}</option>
         </select>
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={targetPlaceholder} className="input" />
-        <input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder={t('iconLabel')} className="input" />
         <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder={t('imageUrlLabel')} className="input" />
         <label className="flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
@@ -365,7 +361,6 @@ export default function LinksPage() {
             </div>
             <input defaultValue={l.title} onBlur={(e) => update(l.id, e.currentTarget.value, l.url, l.icon || '', l.imageUrl || '', Boolean(l.hidden), l.type, l.musicProvider || null)} className="input flex-1 min-w-[140px]" />
             <input defaultValue={l.url} onBlur={(e) => update(l.id, l.title, e.currentTarget.value, l.icon || '', l.imageUrl || '', Boolean(l.hidden), l.type, l.musicProvider || null)} className="input flex-1 min-w-[140px]" />
-            <input defaultValue={l.icon || ''} onBlur={(e) => update(l.id, l.title, l.url, e.currentTarget.value, l.imageUrl || '', Boolean(l.hidden), l.type, l.musicProvider || null)} placeholder={t('iconLabel')} className="input w-24" />
             <input defaultValue={l.imageUrl || ''} onBlur={(e) => update(l.id, l.title, l.url, l.icon || '', e.currentTarget.value, Boolean(l.hidden), l.type, l.musicProvider || null)} placeholder={t('imageUrlLabel')} className="input flex-1 min-w-[140px]" />
             {l.type === 'music' && (
               <select

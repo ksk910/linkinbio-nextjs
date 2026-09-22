@@ -49,18 +49,13 @@ async function addLinkFromForm(page: any, params: {
   url: string
   icon?: string
   imageUrl?: string
-  type?: 'url' | 'music'
-  provider?: 'spotify' | 'apple_music' | 'youtube_music'
   hidden?: boolean
 }) {
   const linkForm = page.locator('form').first()
   const formInputs = linkForm.locator('input')
 
   await formInputs.nth(0).fill(params.title)
-  await linkForm.locator('select').first().selectOption(params.type || 'url')
-  if (params.type === 'music' && params.provider) {
-    await linkForm.locator('select').nth(1).selectOption(params.provider)
-  }
+  await linkForm.locator('select').first().selectOption('url')
   await formInputs.nth(1).fill(params.url)
   await formInputs.nth(2).fill(params.icon || '')
   await formInputs.nth(3).fill(params.imageUrl || '')
@@ -68,6 +63,25 @@ async function addLinkFromForm(page: any, params: {
   if (params.hidden) await hiddenToggle.check()
   else await hiddenToggle.uncheck()
   await linkForm.locator('button[type="submit"], button').first().click()
+}
+
+// 音楽タイプのリンクはリンク管理画面のフォームからはもう作成できない
+// （プロフィール編集のブロック機能と紛らわしいため削除済み）。
+// 既存データに対するフィルタ表示の確認用に、API経由で直接作成する。
+async function createMusicLinkViaApi(page: any, params: { title: string; url: string }) {
+  await page.evaluate(async (p: { title: string; url: string }) => {
+    const token = localStorage.getItem('token')
+    const resp = await fetch('/api/profile/link', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ title: p.title, url: p.url, type: 'music', musicProvider: 'spotify' }),
+    })
+    if (!resp.ok) throw new Error(`music_link_create_failed_${resp.status}`)
+  }, params)
 }
 
 test('minimal user flow: signup -> login -> add links -> view public profile', async ({ page }) => {
@@ -95,13 +109,8 @@ test('minimal user flow: signup -> login -> add links -> view public profile', a
   await expect(linkRows).toHaveCount(1)
   await expect(linkRows.first().getByRole('button', { name: /copy|コピー/i })).toBeVisible()
 
-  await addLinkFromForm(page, {
-    title: musicTitle,
-    url: musicUrl,
-    type: 'music',
-    provider: 'spotify',
-    icon: '🎵',
-  })
+  await createMusicLinkViaApi(page, { title: musicTitle, url: musicUrl })
+  await page.reload()
   await expect(linkRows).toHaveCount(2)
 
   const musicRow = linkRows.filter({ has: page.locator(`input[value="${musicUrl}"]`) }).first()
@@ -137,12 +146,8 @@ test('links filter flow: all / hidden / music and drag state', async ({ page }) 
   })
   await expect(linkRows).toHaveCount(1)
 
-  await addLinkFromForm(page, {
-    title: `E2E Music ${unique}`,
-    url: musicUrl,
-    type: 'music',
-    provider: 'spotify',
-  })
+  await createMusicLinkViaApi(page, { title: `E2E Music ${unique}`, url: musicUrl })
+  await page.reload()
   await expect(linkRows).toHaveCount(2)
 
   await addLinkFromForm(page, {

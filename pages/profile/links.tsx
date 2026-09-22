@@ -22,13 +22,6 @@ type LinkItem = {
   order: number
 }
 
-function matchesMusicProviderUrl(provider: MusicProvider, url: string): boolean {
-  const normalized = url.toLowerCase()
-  if (provider === 'apple_music') return normalized.includes('music.apple.com')
-  if (provider === 'spotify') return normalized.includes('open.spotify.com') || normalized.includes('spotify.link')
-  return normalized.includes('music.youtube.com') || normalized.includes('youtu.be') || normalized.includes('youtube.com')
-}
-
 export default function LinksPage() {
   const t = useTranslations('links')
   const [links, setLinks] = useState<LinkItem[]>([])
@@ -39,7 +32,6 @@ export default function LinksPage() {
   const [imageUrl, setImageUrl] = useState('')
   const [hidden, setHidden] = useState(false)
   const [linkType, setLinkType] = useState<LinkType>('url')
-  const [musicProvider, setMusicProvider] = useState<MusicProvider>('spotify')
   const [filter, setFilter] = useState<LinkFilter>('all')
   const [slug, setSlug] = useState<string | null>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
@@ -78,13 +70,9 @@ export default function LinksPage() {
     e.preventDefault()
     const normalized = normalizeLinkValue(linkType, url)
     if (!normalized) {
-      if (linkType === 'url' || linkType === 'music') setFeedback({ type: 'error', text: t('invalidUrl') })
+      if (linkType === 'url') setFeedback({ type: 'error', text: t('invalidUrl') })
       else if (linkType === 'email') setFeedback({ type: 'error', text: t('invalidEmailAddress') })
       else setFeedback({ type: 'error', text: t('invalidPhoneNumber') })
-      return
-    }
-    if (linkType === 'music' && !matchesMusicProviderUrl(musicProvider, normalized)) {
-      setFeedback({ type: 'error', text: t('invalidMusicUrlForProvider') })
       return
     }
 
@@ -98,7 +86,6 @@ export default function LinksPage() {
       hidden,
       order: 0,
     }
-    if (linkType === 'music') payload.musicProvider = musicProvider
 
     const res = await fetch('/api/profile/link', {
       method: 'POST',
@@ -120,7 +107,7 @@ export default function LinksPage() {
           title: l?.title ?? title,
           url: l?.url ?? normalized,
           type: (l?.type ?? linkType) as LinkType,
-          musicProvider: l?.musicProvider ?? (linkType === 'music' ? musicProvider : null),
+          musicProvider: l?.musicProvider ?? null,
           icon: (l?.icon ?? icon) || null,
           imageUrl: (l?.imageUrl ?? imageUrl) || null,
           hidden: typeof l?.hidden === 'boolean' ? l.hidden : hidden,
@@ -132,7 +119,6 @@ export default function LinksPage() {
       setImageUrl('')
       setHidden(false)
       setLinkType('url')
-      setMusicProvider('spotify')
       setFeedback({ type: 'success', text: t('addSuccess') })
       return
     }
@@ -290,11 +276,9 @@ export default function LinksPage() {
   const targetPlaceholder =
     linkType === 'url'
       ? t('urlLabel')
-      : linkType === 'music'
-        ? t('musicUrlLabel')
-        : linkType === 'email'
-          ? t('inputPlaceholderEmail')
-          : t('inputPlaceholderPhone')
+      : linkType === 'email'
+        ? t('inputPlaceholderEmail')
+        : t('inputPlaceholderPhone')
 
   const filteredEntries = links
     .map((link, index) => ({ link, index }))
@@ -337,15 +321,7 @@ export default function LinksPage() {
           <option value="tel">{t('linkTypeTel')}</option>
           <option value="sms">{t('linkTypeSms')}</option>
           <option value="imessage">{t('linkTypeImessage')}</option>
-          <option value="music">{t('linkTypeMusic')}</option>
         </select>
-        {linkType === 'music' && (
-          <select value={musicProvider} onChange={(e) => setMusicProvider(e.target.value as MusicProvider)} className="input">
-            <option value="apple_music">{t('musicProviderAppleMusic')}</option>
-            <option value="spotify">{t('musicProviderSpotify')}</option>
-            <option value="youtube_music">{t('musicProviderYoutubeMusic')}</option>
-          </select>
-        )}
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={targetPlaceholder} className="input" />
         <input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder={t('iconLabel')} className="input" />
         <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder={t('imageUrlLabel')} className="input" />

@@ -221,6 +221,7 @@ test('ANALYTICS GET defaults to a 7-day trend range', async () => {
 test('ANALYTICS GET returns summary counts and insight summary', async () => {
   const originalFindUnique = prisma.profile.findUnique
   const originalFindMany = prisma.analyticsEvent.findMany
+  const originalFindManyLinks = prisma.link.findMany
 
   const today = new Date()
   const yesterday = new Date(today)
@@ -232,6 +233,7 @@ test('ANALYTICS GET returns summary counts and insight summary', async () => {
     { id: 'a2', profileId: 'profile_analytics_summary', type: 'view', linkId: null, createdAt: today },
     { id: 'a3', profileId: 'profile_analytics_summary', type: 'click', linkId: 'link_1', createdAt: yesterday },
   ]
+  ;(prisma.link.findMany as any) = async () => []
 
   try {
     const req = createMockReq({
@@ -273,5 +275,6 @@ test('ANALYTICS GET returns summary counts and insight summary', async () => {
   } finally {
     ;(prisma.profile.findUnique as any) = originalFindUnique
     ;(prisma.analyticsEvent.findMany as any) = originalFindMany
+    ;(prisma.link.findMany as any) = originalFindManyLinks
   }
 })

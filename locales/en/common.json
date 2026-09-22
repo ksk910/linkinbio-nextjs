@@ -232,6 +232,7 @@
     "musicProviderYoutubeMusic": "YouTube Music",
     "inputPlaceholderEmail": "example@domain.com",
     "inputPlaceholderPhone": "+1 555 123 4567",
+    "iconLabel": "Icon (optional)",
     "imageUrlLabel": "Image URL (optional)",
     "hiddenLabel": "Hide on public page",
     "filterLabel": "Filter",

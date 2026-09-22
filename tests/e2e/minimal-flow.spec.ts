@@ -47,6 +47,7 @@ async function signupLoginAndOpenLinks(page: any, unique: string) {
 async function addLinkFromForm(page: any, params: {
   title: string
   url: string
+  icon?: string
   imageUrl?: string
   hidden?: boolean
 }) {
@@ -56,7 +57,8 @@ async function addLinkFromForm(page: any, params: {
   await formInputs.nth(0).fill(params.title)
   await linkForm.locator('select').first().selectOption('url')
   await formInputs.nth(1).fill(params.url)
-  await formInputs.nth(2).fill(params.imageUrl || '')
+  await formInputs.nth(2).fill(params.icon || '')
+  await formInputs.nth(3).fill(params.imageUrl || '')
   const hiddenToggle = linkForm.locator('input[type="checkbox"]').first()
   if (params.hidden) await hiddenToggle.check()
   else await hiddenToggle.uncheck()
@@ -101,6 +103,7 @@ test('minimal user flow: signup -> login -> add links -> view public profile', a
   await addLinkFromForm(page, {
     title: linkTitle,
     url: linkUrl,
+    icon: 'DOC',
     imageUrl: 'https://picsum.photos/seed/e2e-link/64/64',
   })
   await expect(linkRows).toHaveCount(1)

@@ -194,7 +194,7 @@
     "blockTypeBio": "Bio/Text",
     "blockTypeLinks": "Links",
     "blockTypeIcon": "Icon",
-    "blockTypeLine": "Line",
+    "blockTypeLine": "区切り線",
     "blockTypeVideo": "Video",
     "blockTypeMusic": "Music",
     "blockContentPlaceholder": "ブロック内容を入力",

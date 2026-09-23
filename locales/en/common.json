@@ -194,7 +194,7 @@
     "blockTypeBio": "Bio/Text",
     "blockTypeLinks": "Links",
     "blockTypeIcon": "Icon",
-    "blockTypeLine": "Line",
+    "blockTypeLine": "Divider",
     "blockTypeVideo": "Video",
     "blockTypeMusic": "Music",
     "blockContentPlaceholder": "Enter block content",
